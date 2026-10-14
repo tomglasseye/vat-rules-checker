@@ -1,0 +1,5 @@
+# Hosts the VAT Rules Checker prototype with a live VIES check.
+# Only the prototype folder is published; Miranda's spreadsheet and notes in this folder are not.
+[build]
+  publish = "prototype"
+  functions = "netlify/functions"

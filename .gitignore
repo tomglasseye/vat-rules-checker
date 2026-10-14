@@ -1,0 +1,10 @@
+# Netlify local state
+.netlify
+node_modules
+.DS_Store
+# Keep client spreadsheets and notes out of the repo
+*.xlsx
+*.xls
+*.docx
+# Emailable copy of the app kept in the local folder
+prototype/VAT Rules Checker - prototype.html
