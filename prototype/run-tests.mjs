@@ -1,8 +1,8 @@
 // Runs the built-in test scenarios and the full input-coverage check against the rules engine.
-// Usage: node tests/run-tests.mjs
+// Usage: node prototype/run-tests.mjs
 import { createRequire } from "node:module";
 const require = createRequire(import.meta.url);
-const V = require("../prototype/engine.js");
+const V = require("./engine.js");
 
 const model = { rules: V.defaultRules(), rates: V.defaultRates() };
 const tests = V.defaultTests();

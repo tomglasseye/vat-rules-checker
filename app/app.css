@@ -1,0 +1,132 @@
+@import "tailwindcss";
+
+/* Design tokens. Only these colours exist, so every screen stays on-palette.
+   Light values here; dark values below. Utilities like bg-surface and text-ink
+   read the variables, so they switch with the theme without dark: variants. */
+@theme {
+  --color-*: initial;
+  --color-transparent: transparent;
+  --color-current: currentColor;
+  --color-white: #fff;
+
+  --color-bg: #f1f3f7;
+  --color-surface: #ffffff;
+  --color-sunken: #e8ecf3;
+  --color-ink: #131f38;
+  --color-muted: #56607a;
+  --color-line: #d2d9e5;
+  --color-accent: #2446b5;
+  --color-accent-soft: #e3e9fa;
+  --color-on-accent: #ffffff;
+  --color-ok: #156f47;
+  --color-ok-soft: #e0f1e7;
+  --color-warn: #8f5400;
+  --color-warn-soft: #fbeed3;
+  --color-block: #b0261e;
+  --color-block-soft: #fae3e1;
+
+  --font-sans: "Archivo", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-display: "Archivo", "Arial Narrow", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+
+  --text-2xs: 11px;
+  --text-2xs--line-height: 1.4;
+
+  --radius-field: 7px;
+  --radius-card: 10px;
+
+  --shadow-seg: 0 1px 2px rgb(10 20 40 / 0.12), 0 0 0 1px var(--color-line);
+}
+
+/* Dark theme: follows the system unless the person picks light or dark (data-theme on <html>) */
+@layer base {
+  :root[data-theme="dark"] {
+    --color-bg: #0c1220;
+    --color-surface: #141c2d;
+    --color-sunken: #1a2337;
+    --color-ink: #e4e8f1;
+    --color-muted: #98a2b9;
+    --color-line: #29334c;
+    --color-accent: #8ea9ff;
+    --color-accent-soft: #1d2948;
+    --color-on-accent: #0c1220;
+    --color-ok: #62c893;
+    --color-ok-soft: #10281c;
+    --color-warn: #f0b55c;
+    --color-warn-soft: #31230c;
+    --color-block: #ff857a;
+    --color-block-soft: #381614;
+    color-scheme: dark;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --color-bg: #0c1220;
+      --color-surface: #141c2d;
+      --color-sunken: #1a2337;
+      --color-ink: #e4e8f1;
+      --color-muted: #98a2b9;
+      --color-line: #29334c;
+      --color-accent: #8ea9ff;
+      --color-accent-soft: #1d2948;
+      --color-on-accent: #0c1220;
+      --color-ok: #62c893;
+      --color-ok-soft: #10281c;
+      --color-warn: #f0b55c;
+      --color-warn-soft: #31230c;
+      --color-block: #ff857a;
+      --color-block-soft: #381614;
+      color-scheme: dark;
+    }
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+  body {
+    @apply bg-bg text-ink font-sans text-[15px] leading-normal antialiased;
+  }
+  h1, h2, h3 {
+    @apply font-display;
+    text-wrap: balance;
+  }
+  :focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+  }
+  input, select, textarea, button {
+    font: inherit;
+    color: inherit;
+  }
+  ::selection {
+    background: var(--color-accent-soft);
+  }
+}
+
+@layer components {
+  /* Form controls share one look */
+  .field-control {
+    @apply w-full min-h-10 rounded-field border border-line bg-surface px-2.5 py-2 text-ink;
+  }
+  .field-control:disabled {
+    @apply bg-sunken text-muted;
+  }
+  textarea.field-control {
+    @apply min-h-18 resize-y leading-snug;
+  }
+  .eyebrow {
+    @apply text-2xs font-semibold uppercase tracking-[0.08em] text-muted;
+  }
+  .wide {
+    font-stretch: 112%;
+  }
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

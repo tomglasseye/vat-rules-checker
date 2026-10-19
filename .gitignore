@@ -1,10 +1,20 @@
-# Netlify local state
-.netlify
-node_modules
 .DS_Store
+node_modules/
+
+# React Router
+/.react-router/
+/build/
+
+# Local Netlify folder (includes the local database in .netlify/db)
+.netlify
+
+# Environment files
+.env
+.env.*
+
 # Keep client spreadsheets and notes out of the repo
 *.xlsx
 *.xls
 *.docx
-# Emailable copy of the app kept in the local folder
+# Emailable copy of the prototype kept in the local folder
 prototype/VAT Rules Checker - prototype.html

@@ -1,5 +1,11 @@
-# Hosts the VAT Rules Checker prototype with a live VIES check.
-# Only the prototype folder is published; Miranda's spreadsheet and notes in this folder are not.
+# VAT Rules Checker: React Router app on Netlify Functions, Postgres via Netlify Database.
+# Migrations in netlify/database/migrations are applied automatically on each deploy.
 [build]
-  publish = "prototype"
-  functions = "netlify/functions"
+command = "npm run build"
+publish = "build/client"
+
+[build.environment]
+NODE_VERSION = "24"
+
+[dev]
+command = "react-router dev"

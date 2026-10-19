@@ -1,37 +1,102 @@
-# VAT Rules Checker (prototype)
+# VAT Rules Checker
 
-A small web app that works out the VAT treatment of a sale from where the goods ship from, where they're delivered, where the customer is based and whether it's a business or consumer sale. For each sale it gives the tax code and rate, which company should raise the invoice, the mandatory invoice wording, and compliance checks.
+A web app that works out the VAT treatment of a sale from where the goods ship from, where they're delivered, where the customer is based and whether it's a business or consumer sale. For each sale it gives the tax code and rate, which company should raise the invoice, the mandatory invoice wording and compliance checks, with live VIES checks of EU VAT numbers.
 
-The rules started as Miranda Hope's EU VAT Calculator spreadsheet (PVM Consultants) and follow her answers up to 14 October 2026. Rules tagged "Needs sign-off" in the app are still awaiting her confirmation. This is a prototype for review, not tax advice.
+Built for PVM Consultants (Miranda Hope). Each PVM client gets its own rules, its own staff accounts and its own log of saved checks. PVM edits a client's rules as a draft, tests them, and publishes a version when they're ready.
 
-## What's here
+The rules started as Miranda's EU VAT Calculator spreadsheet (v3) and follow her answers up to 14 October 2026. Rules marked "needs sign-off" are still awaiting her confirmation. Not tax advice.
+
+## Stack
+
+- **React Router 8** (framework mode) on **Netlify**. Pages render on the server, and loaders and actions run as Netlify Functions, so there's no separate API.
+- **Tailwind CSS v4**. Colour tokens are set in `app/app.css`; light and dark follow the system setting, with a toggle saved in a cookie.
+- **Postgres** through **Netlify Database**, using **Drizzle ORM**. Locally it's a real Postgres engine in `.netlify/db`, so nothing needs installing.
+- **Sign-in:** placeholder demo accounts for now, laid out for **Better Auth** (see below).
+- **Vitest** for the rules engine and migrations.
+
+## Getting started
+
+Needs Node 22.22 or later (Netlify builds with Node 24).
+
+```bash
+npm install
+npm run dev
+```
+
+Open http://localhost:5173 and sign in with one of the demo accounts. On your computer the password is `demo`.
+
+| Account | What it can do |
+|---|---|
+| `admin@pvm.test` | PVM admin: every client, rules editor, VAT rates, staff accounts |
+| `staff@demo-client.test` | Client staff: check sales and see saved checks for the demo client |
+
+`npm run dev` first brings the local database up to date with the migrations. To start again from the demo data, stop the dev server and run `npm run db:local:reset`.
+
+Other commands:
+
+- `npm test` runs the 27 rule scenarios, the coverage check across all 118,581 possible inputs, and a test that applies every migration to a throwaway database.
+- `npm run typecheck`
+- `npm run build`
+
+## What's where
 
 | Path | What it is |
 |---|---|
-| `prototype/index.html` | The whole app in one file: checker, editable rules, test scenarios, VAT rates |
-| `prototype/engine.js` | The rules engine on its own (no DOM), shared with the tests |
-| `netlify/functions/vies.mjs` | Server function at `/api/vies` that checks EU VAT numbers with the European Commission's VIES service |
-| `netlify.toml` | Publishes `prototype/` and the function |
-| `tests/run-tests.mjs` | Runs the test scenarios and checks every possible input matches a rule |
+| `app/engine/` | The rules engine: pure TypeScript with no database or DOM. It runs in the browser for instant results and on the server before anything is saved. `starter.ts` holds Miranda's rules and the test scenarios. |
+| `app/routes/` | Pages. `check.tsx` is the checker, `history*.tsx` the saved checks, and `admin/` holds clients, the draft rules editor, trying the draft, published versions, staff accounts and VAT rates. |
+| `app/routes/api.vies.ts` | `POST /api/vies` checks a VAT number with the EU's VIES service and stores the answer as evidence. Signed-in users only. |
+| `app/components/` | `Checker.tsx` (shared by the checker and "Try the draft"), `RulesEditor.tsx` and UI pieces |
+| `app/models/` | Database queries, one file per area |
+| `app/lib/auth.server.ts` | Sign-in. Everything goes through this file (see Sign-in) |
+| `db/schema.ts` | Database tables |
+| `netlify/database/migrations/` | SQL migrations. Netlify applies them on every deploy |
+| `prototype/` | The original single-file prototype, kept for reference. It isn't deployed |
 
-## Running it
+## How rules work
 
-- Open `prototype/index.html` in a browser. Everything works except the VAT number check, which is simulated when opened as a file.
-- `node tests/run-tests.mjs` runs the 27 test scenarios and the coverage check.
-- `npx netlify-cli dev` serves it locally with the live VIES function.
+- A client's rules are an ordered list. The first rule whose conditions match the sale decides the result.
+- PVM edits a **draft**. Every edit re-runs the test scenarios and checks that every possible sale matches a rule and that no rule is unreachable.
+- **Publishing** copies the draft into a new numbered version. It's refused unless every check passes. Client staff always use the latest published version.
+- Each saved check records the version that decided it. The server works the result out again from those rules and the stored VIES answer, so the log never depends on what the browser sent.
+- To roll back, copy an older version into the draft on "Published versions" and publish it again.
 
-## Live VAT number checks
+VAT rates are shared by all clients and have an "applies from" date, so a rate change can be added ahead of time and takes over on the day.
 
-Browsers can't call VIES directly, so the page posts to `/api/vies` and the function asks VIES on its behalf. When the page finds that endpoint it switches to live checks and shows the registered name and address. An unavailable VIES service is never treated as an invalid number.
+## Database changes
 
-Optional environment variables (set in Netlify, scoped to Functions):
+1. Edit `db/schema.ts`.
+2. Run `npm run db:generate`. This writes a new folder in `netlify/database/migrations/`.
+3. `npm run dev` applies it locally, and Netlify applies it on the next deploy.
 
-- `VIES_REQUESTER_COUNTRY`, for example `NL`
-- `VIES_REQUESTER_NUMBER`, the client's own VAT number without the country prefix
+Never edit or delete a migration that has been deployed, because Netlify rejects the deploy. Write a new one instead. Don't run `drizzle-kit push` or `drizzle-kit migrate` against the hosted database.
 
-With both set, VIES returns a consultation number for each check, which is the audit evidence.
+`drizzle-orm` and `drizzle-kit` are pinned to the 1.0 beta, which has Netlify Database's adapter and migration format.
 
-## Notes
+## Sign-in
 
-- Rule edits in the app are saved in the viewer's browser only.
-- Client spreadsheets are kept out of the repo by `.gitignore`.
+`app/lib/auth.server.ts` is the only file that knows how sign-in works. Pages use `requireUser` / `requireAdmin` (route middleware) and `authContext`, never the cookie directly.
+
+For now it signs in the accounts in the `user` table with one shared password (`DEMO_PASSWORD`). With that variable unset on Netlify, nobody can sign in.
+
+The `user`, `organization` (a PVM client) and `member` tables already use Better Auth's names and fields. "Active client" maps to Better Auth's `session.activeOrganizationId`. To switch on Better Auth:
+
+1. `npm install better-auth`, then set it up in `app/lib/auth.server.ts` with the Drizzle adapter (pointing at `db/schema.ts`) and the `organization` and `admin` plugins.
+2. Add Better Auth's own tables (`session`, `account`, `verification`, `invitation`) to `db/schema.ts` and generate a migration.
+3. Add a catch-all route for `/api/auth/*` that hands requests to Better Auth.
+4. Replace the inside of `loadAuth`, `signIn`, `signOut` and `setActiveClient`, keeping their names and return shapes.
+5. Add an email sender (Resend, Postmark…) for invitations and password resets. "Staff accounts" then sends invites instead of using the shared password.
+6. Remove the demo accounts with a migration and unset `DEMO_PASSWORD`.
+
+## Deploying to Netlify
+
+The Netlify project `vat-rules-checker` already exists, but with no deploys yet.
+
+- **Netlify Database only runs on Netlify's credit-based plans.** The current team is on the legacy Starter plan, so before the first deploy, either:
+  - put this project on a team that's on a credit-based plan, or
+  - use Postgres from elsewhere (Neon, Supabase) by setting `NETLIFY_DB_URL` to its connection string and applying the migrations yourself.
+- **Environment variables** (Project configuration > Environment variables):
+  - `SESSION_SECRET`: required. A long random string, e.g. from `openssl rand -base64 32`.
+  - `DEMO_PASSWORD`: the shared password until Better Auth is in. Leave it unset to switch sign-in off.
+  - `VIES_REQUESTER_COUNTRY` and `VIES_REQUESTER_NUMBER`: optional. Set them to the client's own VAT number to get a VIES consultation number with each check, which is the evidence an auditor asks for.
+- **Deploy:** connect the Git repo in Netlify, or run `npx netlify-cli deploy` from this folder.
+- **Preview data:** deploy previews get a copy of the production database, and preview links are public, so don't share them once real client data is in.
