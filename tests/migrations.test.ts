@@ -29,6 +29,21 @@ test("seeded published rules pass their own tests", async () => {
   expect(h.ok).toBe(true);
 });
 
+test("the 19 Oct migration moves the demo draft to the new starter rules and leaves version 1 alone", async () => {
+  const { rows } = await db.query<{ status: string; rules: Rule[]; tests: TestScenario[] }>(`SELECT status, rules, tests FROM rule_set ORDER BY status`);
+  const draft = rows.find((r) => r.status === "draft")!;
+  const v1 = rows.find((r) => r.status === "published")!;
+  const ids = draft.rules.map((r) => r.id);
+  expect(ids).toContain("r-uk-eu-reroute-b2b");
+  expect(ids).toContain("r-uk-eu-reroute-b2c");
+  expect(ids).not.toContain("r-uk-eu-ioss");
+  expect(draft.tests.map((t) => t.id)).toContain("t28");
+  expect(v1.rules.map((r) => r.id)).toContain("r-uk-eu-ioss");
+  const { rows: rateRows } = await db.query<{ country: string; rate: number }>(`SELECT country, rate FROM vat_rate`);
+  const rates = Object.fromEntries(rateRows.map((r) => [r.country, Number(r.rate)]));
+  expect(health(draft.rules, draft.tests, rates).ok).toBe(true);
+});
+
 test("only one draft per client", async () => {
   await expect(db.query(`INSERT INTO rule_set (id, organization_id, status, rules, tests) VALUES ('x', 'org_demo', 'draft', '[]', '[]')`)).rejects.toThrow();
 });

@@ -4,7 +4,7 @@ A web app that works out the VAT treatment of a sale from where the goods ship f
 
 Built for PVM Consultants (Miranda Hope). Each PVM client gets its own rules, its own staff accounts and its own log of saved checks. PVM edits a client's rules as a draft, tests them, and publishes a version when they're ready.
 
-The rules started as Miranda's EU VAT Calculator spreadsheet (v3) and follow her answers up to 14 October 2026. Rules marked "needs sign-off" are still awaiting her confirmation. Not tax advice.
+The rules started as Miranda's EU VAT Calculator spreadsheet (v3) and follow her answers up to 19 October 2026. Rules marked "needs sign-off" are still awaiting her confirmation. Not tax advice.
 
 ## Stack
 
@@ -34,7 +34,7 @@ Open http://localhost:5173 and sign in with one of the demo accounts. On your co
 
 Other commands:
 
-- `npm test` runs the 27 rule scenarios, the coverage check across all 118,581 possible inputs, and a test that applies every migration to a throwaway database.
+- `npm test` runs the 28 rule scenarios, the coverage check across all 118,581 possible inputs, and a test that applies every migration to a throwaway database.
 - `npm run typecheck`
 - `npm run build`
 

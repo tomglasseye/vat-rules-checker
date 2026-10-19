@@ -260,7 +260,7 @@ textarea { min-height: 72px; resize: vertical; line-height: 1.45; }
   <header class="top">
     <div class="brand">
       <h1>VAT Rules Checker <span class="proto">Prototype</span></h1>
-      <p>Follows Miranda's EU VAT Calculator (v3) and her answers up to 14 October, with the formula issues fixed. The rules, rates and test scenarios are data you can edit.</p>
+      <p>Follows Miranda's EU VAT Calculator (v3) and her answers up to 19 October, with the formula issues fixed. The rules, rates and test scenarios are data you can edit.</p>
     </div>
   </header>
 
@@ -352,7 +352,7 @@ textarea { min-height: 72px; resize: vertical; line-height: 1.45; }
     <div class="panel-head">
       <div>
         <h2>Test scenarios</h2>
-        <p>Each scenario is a sale with a known correct answer, based on Miranda's answers up to 14 October. They rerun every time a rule or rate changes, so an edit can't quietly break another case. Add more from the checker with “Save as test scenario”.</p>
+        <p>Each scenario is a sale with a known correct answer, based on Miranda's answers up to 19 October. They rerun every time a rule or rate changes, so an edit can't quietly break another case. Add more from the checker with “Save as test scenario”.</p>
       </div>
     </div>
     <div class="stats" id="test-stats"></div>
@@ -379,9 +379,10 @@ textarea { min-height: 72px; resize: vertical; line-height: 1.45; }
 
 <script>
 /* ===== VAT rules engine: pure functions + default data. No DOM. =====
-   Rules follow Miranda's answers up to 14 Oct 2026 and the wording in her
+   Rules follow Miranda's answers up to 19 Oct 2026 and the wording in her
    EU VAT Calculator spreadsheet v3. Client set-up: established in the UK,
-   paper (non-established) VAT registration in the Netherlands, uses IOSS. */
+   paper (non-established) VAT registration in the Netherlands, not yet
+   registered for IOSS. */
 (function (root) {
   "use strict";
 
@@ -448,6 +449,7 @@ textarea { min-height: 72px; resize: vertical; line-height: 1.45; }
     ukExpWarn: "CRITICAL POST-BREXIT WARNING: Direct transport from UK into the EU constitutes an import. Local customs duties and Import VAT are fully applicable at the border.",
     nlRcInv: "VAT Reversed - Section 1e Dutch Turnover Tax Act (Non-established supplier)",
     rerouteInv: "DO NOT INVOICE: Goods must be rerouted through the Netherlands warehouse to comply with local storage tax rules.",
+    ukRerouteInv: "DO NOT INVOICE: UK stock must be rerouted through the Netherlands warehouse before it's sold to a customer in the EU.",
     icsInv: "Zero-Rated Intra-Community Supply - Customer accounts for Acquisition VAT in destination country.",
     triInv: "VAT Reverse Charge – Simplified Triangulation Rule Applies. Final customer self-accounts for local acquisition VAT.",
     triWarn: "There must be exactly one physical cross-border movement of goods. The transport must be arranged and paid for by either the supplier (despatch country) or the intermediary (your business)."
@@ -478,22 +480,16 @@ textarea { min-height: 72px; resize: vertical; line-height: 1.45; }
         V3 + " Miranda (14 Oct): the client owns the goods on import into the UK, so this is a UK sale. Open point: assumes the client always imports the goods itself.",
         { origin: ["NL", "OTHER"], destZone: ["UK"] },
         { code: "20% UK VAT", rate: DEST, invoice: W.ukImpInv, warning: W.ukImpWarn, entity: "UK" }),
-      R("r-uk-eu-b2b", "UK stock to an EU business", "fixed",
-        NOTV3 + "its formula gives intra-community supply or triangulation here, but its own warning and rule table say 0% UK export. Open point: v3 says invoice from the NL company; confirm.",
+      R("r-uk-eu-reroute-b2b", "UK stock to an EU business: reroute via NL", "fixed",
+        NOTV3 + "its formula gives intra-community supply or triangulation here. Miranda (19 Oct): moving UK stock into the EU is a 0% UK export, but it has to be rerouted through the Netherlands first. Open points: should this block the sale or only warn, and does it apply when the goods are delivered in the Netherlands?",
         { origin: ["UK"], destZone: ["EU", "NL"], type: ["B2B"] },
-        { code: "0% UK Export", rate: ZERO, invoice: W.ukExpInv, warning: W.ukExpWarn, entity: "NL" }),
-      R("r-uk-eu-ioss", "UK stock to an EU consumer, parcel €150 or less", "fixed",
-        NOTV3 + "its formula uses OSS wording. Miranda agreed (13 Oct) this is IOSS for parcels up to €150; the client uses IOSS. Invoice wording and invoicing company to confirm.",
-        { origin: ["UK"], destZone: ["EU", "NL"], type: ["B2C"], value: ["low"] },
-        { code: "IOSS", rate: DEST, level: "warn", entity: "NL",
-          invoice: "Distance sale of imported goods – {dest} VAT charged at {rate} under IOSS.",
-          warning: "Ship from EU stock if you can. If this order has to leave from the UK, charge {dest} VAT under IOSS and give the carrier your IOSS number for the customs declaration." }),
-      R("r-uk-eu-import", "UK stock to an EU consumer, parcel over €150", "fixed",
-        NOTV3 + "its formula uses OSS wording. Above €150 IOSS can't be used, so this is a 0% UK export with import VAT at the border. Invoice wording and invoicing company to confirm.",
-        { origin: ["UK"], destZone: ["EU", "NL"], type: ["B2C"], value: ["high"] },
-        { code: "0% UK Export", rate: ZERO, level: "warn", entity: "NL",
-          invoice: "Zero-Rated UK Export. Import VAT and duty are payable on import into {dest}.",
-          warning: "Ship from EU stock if you can. Above €150 IOSS can't be used, so import VAT ({destRate}) and any duty are collected at the border unless you ship duties paid (DDP)." }),
+        { code: "REROUTE VIA NL REQUIRED", rate: NONE, level: "block", invoice: W.ukRerouteInv,
+          warning: "UK stock can't be sent straight to a business customer in {dest}. Move the goods to the Netherlands warehouse first (a 0% UK export, imported into the Netherlands), then check the sale again with the Netherlands as the ship-from country." }),
+      R("r-uk-eu-reroute-b2c", "UK stock to an EU consumer: reroute via NL", "fixed",
+        NOTV3 + "its formula uses OSS wording. Miranda (19 Oct): the client isn't registered for IOSS yet, so UK stock has to be rerouted through the Netherlands, and the OSS rules then apply. She's getting them registered, so the IOSS rules (parcels up to €150, and import VAT above €150) are kept aside to put back then. Open points: should this block the sale or only warn, and does it apply when the goods are delivered in the Netherlands?",
+        { origin: ["UK"], destZone: ["EU", "NL"], type: ["B2C"] },
+        { code: "REROUTE VIA NL REQUIRED", rate: NONE, level: "block", invoice: W.ukRerouteInv,
+          warning: "The client isn't registered for IOSS, so UK stock can't be sent straight to a consumer in {dest}. Move the goods to the Netherlands warehouse first, then check the sale again with the Netherlands as the ship-from country." }),
       R("r-nl-rc", "NL stock to a business, delivered in NL", "fixed",
         NOTV3 + "its formula skips the reverse charge when goods ship from the Netherlands and gives intra-community supply or triangulation. Miranda confirmed (13 Oct) the reverse charge applies to any business delivery in NL because of the paper registration. She's checking the \"Section 1e\" reference.",
         { origin: ["NL"], destZone: ["NL"], type: ["B2B"] },
@@ -512,11 +508,11 @@ textarea { min-height: 72px; resize: vertical; line-height: 1.45; }
         { code: "OSS Destination Rate", rate: DEST, invoice: W.ossInv, entity: "NL",
           warning: "The customer is based in {cust} and has no verified EU VAT number, so this is treated as a consumer sale. If they give you a valid {dest} VAT number for the receiving party, check it with VIES: the sale can then be zero-rated." }),
       R("r-triangulation", "Triangulation", "fixed",
-        NOTV3 + "its formula still triggers triangulation when the customer's country differs from the delivery country. Miranda confirmed (14 Oct) it's when the despatch country, NL and the delivery country are all different. Open point: does it still apply when the customer is based in a different country from the delivery country?",
+        NOTV3 + "its formula triggers triangulation when the customer's country differs from the delivery country. This follows Miranda's 14 Oct answer: the despatch country, NL and the delivery country are all different. On 19 Oct she said it's when the customer's country differs from the delivery country, as v3 does. Kept on the 14 Oct version until she confirms with worked examples.",
         { origin: ["OTHER"], destZone: ["EU"], type: ["B2B"] },
         { code: "0% EU Triangulation", rate: ZERO, invoice: W.triInv, warning: W.triWarn, needsVat: true, entity: "NL" }),
       R("r-ics", "Intra-community supply from NL stock", "fixed",
-        NOTV3 + "its formula calls this triangulation when the customer's country differs from the delivery country. Goods leaving the Netherlands can't be triangulation under Miranda's 14 Oct answer, so this is a plain 0% intra-community supply. Open point: confirm for customers based in a third EU country.",
+        NOTV3 + "its formula calls this triangulation when the customer's country differs from the delivery country. Goods leaving the Netherlands can't be triangulation under Miranda's 14 Oct answer, so this is a plain 0% intra-community supply. Her 19 Oct answer would make NL stock to Germany for a French customer triangulation; kept as it is until she confirms with worked examples.",
         { origin: ["NL"], destZone: ["EU"], type: ["B2B"] },
         { code: "0% Intra-Community Supply", rate: ZERO, invoice: W.icsInv, needsVat: true, entity: "NL" }),
       R("r-oss", "EU stock to an EU consumer (OSS)", "sheet", V3,
@@ -526,7 +522,7 @@ textarea { min-height: 72px; resize: vertical; line-height: 1.45; }
   }
 
   // Rules with an open point Miranda still needs to confirm
-  const SIGNOFF = ["r-eu-uk", "r-uk-eu-b2b", "r-uk-eu-ioss", "r-uk-eu-import", "r-nl-rc", "r-other-nl", "r-triangulation", "r-ics"];
+  const SIGNOFF = ["r-eu-uk", "r-uk-eu-reroute-b2b", "r-uk-eu-reroute-b2c", "r-nl-rc", "r-other-nl", "r-triangulation", "r-ics"];
   function defaultRules() {
     return baseRules().map(r => Object.assign(r, { signoff: SIGNOFF.includes(r.id) }));
   }
@@ -541,9 +537,9 @@ textarea { min-height: 72px; resize: vertical; line-height: 1.45; }
       T("t04", "French stock to a UK consumer", I("France", "UK", "UK", "B2C"), { code: "20% UK VAT", rate: 20 }),
       T("t05", "UK stock to rest of world", I("UK", "ROW", "ROW", "B2B"), { code: "0% Export", entity: "UK" }),
       T("t06", "Spanish stock to rest of world", I("Spain", "ROW", "ROW", "B2B"), { code: "0% Export", entity: "UK" }),
-      T("t07", "UK stock to Irish business", I("UK", "Ireland", "Ireland", "B2B"), { code: "0% UK Export", rate: 0 }),
-      T("t08", "UK stock to German consumer, €150 or less", I("UK", "Germany", "Germany", "B2C", "", "low"), { code: "IOSS", rate: 19, level: "warn" }),
-      T("t09", "UK stock to German consumer, over €150", I("UK", "Germany", "Germany", "B2C", "", "high"), { code: "0% UK Export", rate: 0, level: "warn" }),
+      T("t07", "UK stock to Irish business", I("UK", "Ireland", "Ireland", "B2B"), { code: "REROUTE VIA NL REQUIRED", level: "block" }),
+      T("t08", "UK stock to German consumer, €150 or less", I("UK", "Germany", "Germany", "B2C", "", "low"), { code: "REROUTE VIA NL REQUIRED", level: "block" }),
+      T("t09", "UK stock to German consumer, over €150", I("UK", "Germany", "Germany", "B2C", "", "high"), { code: "REROUTE VIA NL REQUIRED", level: "block" }),
       T("t10", "NL stock to Dutch business, VAT no. verified", I("Netherlands", "Netherlands", "Netherlands", "B2B", "valid"), { code: "0% NL RC", level: "ok", entity: "NL" }),
       T("t11", "NL stock delivered in NL to a German business", I("Netherlands", "Netherlands", "Germany", "B2B", "valid"), { code: "0% NL RC" }),
       T("t12", "NL stock to Dutch consumer", I("Netherlands", "Netherlands", "Netherlands", "B2C"), { code: "Standard NL VAT", rate: 21 }),
@@ -561,7 +557,8 @@ textarea { min-height: 72px; resize: vertical; line-height: 1.45; }
       T("t24", "NL stock to German business, VAT no. invalid", I("Netherlands", "Germany", "Germany", "B2B", "invalid"), { code: "OSS Destination Rate", rate: 19 }),
       T("t25", "NL stock to German consumer", I("Netherlands", "Germany", "Germany", "B2C"), { code: "OSS Destination Rate", rate: 19, entity: "NL" }),
       T("t26", "NL stock to Portuguese consumer", I("Netherlands", "Portugal", "Portugal", "B2C"), { code: "OSS Destination Rate", rate: 23 }),
-      T("t27", "UK stock to Dutch business", I("UK", "Netherlands", "Netherlands", "B2B"), { code: "0% UK Export" })
+      T("t27", "UK stock to Dutch business", I("UK", "Netherlands", "Netherlands", "B2B"), { code: "REROUTE VIA NL REQUIRED", level: "block" }),
+      T("t28", "UK stock to Dutch consumer", I("UK", "Netherlands", "Netherlands", "B2C"), { code: "REROUTE VIA NL REQUIRED", level: "block" })
     ];
   }
 
@@ -695,8 +692,10 @@ textarea { min-height: 72px; resize: vertical; line-height: 1.45; }
     return { total, gaps, gapExample, hits };
   }
 
-  // The parcel-value question only matters for UK stock sold to an EU consumer
-  function valueRelevant(inp) {
+  // The parcel-value question only matters for UK stock sold to an EU consumer, and only if a rule
+  // uses it (just the IOSS rules, kept aside until the client is registered for IOSS)
+  function valueRelevant(inp, rules) {
+    if (rules && !rules.some(r => Array.isArray(r.when.value))) return false;
     return inp.dispatch === "UK" && inp.type === "B2C" && (zoneOf(inp.dest) === "EU" || zoneOf(inp.dest) === "NL");
   }
 
@@ -749,7 +748,7 @@ textarea { min-height: 72px; resize: vertical; line-height: 1.45; }
   };
 
   // ---------- Model & persistence ----------
-  const STORE_KEY = "vat-rules-checker:v3";
+  const STORE_KEY = "vat-rules-checker:v4";
   const DEFAULTS = () => ({ rules: V.defaultRules(), rates: V.defaultRates(), tests: V.defaultTests() });
   const defaultRuleJson = Object.fromEntries(V.defaultRules().map(r => [r.id, JSON.stringify(r)]));
   const defaultRates = V.defaultRates();
@@ -815,7 +814,7 @@ textarea { min-height: 72px; resize: vertical; line-height: 1.45; }
   }
   function toggleCells() {
     $("#cell-vat").hidden = inp.type !== "B2B";
-    $("#cell-value").hidden = !V.valueRelevant(inp);
+    $("#cell-value").hidden = !V.valueRelevant(inp, model.rules);
   }
 
   // ---------- VAT check (simulated VIES) ----------
@@ -1231,6 +1230,7 @@ textarea { min-height: 72px; resize: vertical; line-height: 1.45; }
   let derivedTimer = null;
   function changed(opts = {}) {
     save();
+    toggleCells();
     renderResult();
     clearTimeout(derivedTimer);
     derivedTimer = setTimeout(() => {

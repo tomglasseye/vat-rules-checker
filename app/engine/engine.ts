@@ -178,8 +178,14 @@ export function health(rules: Rule[], tests: TestScenario[], rates: Model["rates
   };
 }
 
-/** The parcel-value question only matters for UK stock sold to an EU consumer */
-export function valueRelevant(inp: Pick<CheckInput, "dispatch" | "type" | "dest">): boolean {
+/** Whether any rule looks at the parcel value (only the IOSS rules do) */
+export function rulesUseValue(rules: Rule[]): boolean {
+  return rules.some((r) => Array.isArray(r.when.value));
+}
+
+/** The parcel-value question only matters for UK stock sold to an EU consumer, and only if a rule uses it */
+export function valueRelevant(inp: Pick<CheckInput, "dispatch" | "type" | "dest">, rules?: Rule[]): boolean {
+  if (rules && !rulesUseValue(rules)) return false;
   const z = zoneOf(inp.dest);
   return inp.dispatch === "UK" && inp.type === "B2C" && (z === "EU" || z === "NL");
 }

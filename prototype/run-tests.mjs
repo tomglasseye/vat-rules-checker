@@ -2,7 +2,9 @@
 // Usage: node prototype/run-tests.mjs
 import { createRequire } from "node:module";
 const require = createRequire(import.meta.url);
-const V = require("./engine.js");
+// The repo's package.json is "type": "module", so engine.js loads as ESM and sets globalThis.VAT
+const mod = require("./engine.js");
+const V = typeof mod.defaultRules === "function" ? mod : globalThis.VAT;
 
 const model = { rules: V.defaultRules(), rates: V.defaultRates() };
 const tests = V.defaultTests();

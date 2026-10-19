@@ -158,7 +158,7 @@ export function Checker({ rules, rates, initial, organizationId, showInternals, 
     });
   }
 
-  const showValue = valueRelevant(inp);
+  const showValue = valueRelevant(inp, rules);
   const ent = res.entity ? ENTITY[res.entity] : null;
   const viesInfo = vat.status === "done" ? vat.info : null;
 

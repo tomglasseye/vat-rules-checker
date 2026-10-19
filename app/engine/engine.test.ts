@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { checkVatFormat, coverage, defaultRates, describeInputs, evaluate, health, runTest, starterRules, starterTests } from "./index";
+import { checkVatFormat, coverage, defaultRates, describeInputs, evaluate, health, parkedIossRules, runTest, starterRules, starterTests, valueRelevant } from "./index";
 
 const model = { rules: starterRules(), rates: defaultRates() };
 
@@ -26,7 +26,32 @@ describe("starter rules", () => {
   test("health says the starter set is publishable", () => {
     const h = health(model.rules, starterTests(), model.rates);
     expect(h.ok).toBe(true);
-    expect(h.signoff).toBe(8);
+    expect(h.signoff).toBe(7);
+  });
+
+  test("UK stock into the EU is rerouted via NL, B2B and B2C", () => {
+    for (const type of ["B2B", "B2C"] as const) {
+      const r = evaluate({ dispatch: "UK", dest: "France", cust: "France", type, vies: "unchecked", value: "low" }, model);
+      expect(r.code).toBe("REROUTE VIA NL REQUIRED");
+      expect(r.level).toBe("block");
+    }
+  });
+
+  test("the parked IOSS rules still drop back in cleanly", () => {
+    const rules = starterRules().flatMap((r) => (r.id === "r-uk-eu-reroute-b2c" ? parkedIossRules() : [r]));
+    const c = coverage({ rules, rates: model.rates });
+    expect(c.gaps).toBe(0);
+    expect(c.hits.filter((h) => h === 0)).toEqual([]);
+    const r = evaluate({ dispatch: "UK", dest: "Germany", cust: "Germany", type: "B2C", vies: "unchecked", value: "low" }, { rules, rates: model.rates });
+    expect(r.code).toBe("IOSS");
+    expect(r.invoice).toBe("Distance sale of imported goods – Germany VAT charged at 19% under IOSS.");
+  });
+
+  test("the parcel-value question only shows when a rule uses it", () => {
+    const sale = { dispatch: "UK", dest: "Germany", type: "B2C" as const };
+    expect(valueRelevant(sale, starterRules())).toBe(false);
+    expect(valueRelevant(sale, [...starterRules(), ...parkedIossRules()])).toBe(true);
+    expect(valueRelevant(sale)).toBe(true);
   });
 });
 
@@ -46,7 +71,7 @@ describe("engine behaviour", () => {
 
   test("placeholders fill in", () => {
     const r = evaluate({ dispatch: "UK", dest: "Germany", cust: "Germany", type: "B2C", vies: "unchecked", value: "low" }, model);
-    expect(r.invoice).toBe("Distance sale of imported goods – Germany VAT charged at 19% under IOSS.");
+    expect(r.notes[0].text).toBe("The client isn't registered for IOSS, so UK stock can't be sent straight to a consumer in Germany. Move the goods to the Netherlands warehouse first, then check the sale again with the Netherlands as the ship-from country.");
   });
 
   test("no matching rule blocks the sale", () => {
