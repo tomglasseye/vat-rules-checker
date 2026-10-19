@@ -6,7 +6,7 @@ import { join } from "node:path";
 import { COUNTRY_CODE, RATE_COUNTRIES, defaultRates, starterRules, starterTests } from "../app/engine/index";
 
 const dir = process.argv[2];
-if (!dir) throw new Error("Pass the migration folder, e.g. netlify/database/migrations/20261016074013_seed_demo");
+if (!dir) throw new Error("Pass the migration folder, e.g. db/migrations/20261016074013_seed_demo");
 
 const q = (s: string | null) => (s === null ? "NULL" : `'${s.replace(/'/g, "''")}'`);
 const json = (v: unknown) => `${q(JSON.stringify(v))}::jsonb`;

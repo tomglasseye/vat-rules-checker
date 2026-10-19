@@ -10,7 +10,7 @@ The rules started as Miranda's EU VAT Calculator spreadsheet (v3) and follow her
 
 - **React Router 8** (framework mode) on **Netlify**. Pages render on the server, and loaders and actions run as Netlify Functions, so there's no separate API.
 - **Tailwind CSS v4**, styled after the Minia admin template: IBM Plex Sans, an indigo primary, a sidebar and top bar, and flat bordered cards. Colour tokens are set in `app/app.css`; light and dark follow the system setting until someone uses the toggle in the top bar, which is saved in a cookie.
-- **Postgres** through **Netlify Database**, using **Drizzle ORM**. Locally it's a real Postgres engine in `.netlify/db`, so nothing needs installing.
+- **Postgres** on **Supabase**, using **Drizzle ORM** with node-postgres. On your computer `npm run dev` runs a real Postgres engine in `.netlify/db` instead, so nothing needs installing and local work never touches the real data.
 - **Sign-in:** placeholder demo accounts for now, laid out for **Better Auth** (see below).
 - **Vitest** for the rules engine and migrations.
 
@@ -49,7 +49,8 @@ Other commands:
 | `app/models/` | Database queries, one file per area |
 | `app/lib/auth.server.ts` | Sign-in. Everything goes through this file (see Sign-in) |
 | `db/schema.ts` | Database tables |
-| `netlify/database/migrations/` | SQL migrations. Netlify applies them on every deploy |
+| `db/migrations/` | SQL migrations. `npm run db:migrate` applies new ones to Supabase, and Netlify runs it before every build |
+| `db/migrate.ts`, `db/connection.ts` | The migration runner and the connection settings (SSL for Supabase, none locally) |
 | `prototype/` | The original single-file prototype, kept for reference. It isn't deployed |
 
 ## How rules work
@@ -65,12 +66,14 @@ VAT rates are shared by all clients and have an "applies from" date, so a rate c
 ## Database changes
 
 1. Edit `db/schema.ts`.
-2. Run `npm run db:generate`. This writes a new folder in `netlify/database/migrations/`.
-3. `npm run dev` applies it locally, and Netlify applies it on the next deploy.
+2. Run `npm run db:generate`. This writes a new folder in `db/migrations/`.
+3. `npm run dev` applies it locally. The next Netlify build applies it to Supabase (`npm run db:migrate`, which records what it has applied in the `app_migrations` table).
 
-Never edit or delete a migration that has been deployed, because Netlify rejects the deploy. Write a new one instead. Don't run `drizzle-kit push` or `drizzle-kit migrate` against the hosted database.
+Never edit or delete a migration that has been applied to Supabase: the runner won't run it again, so the change would be lost. Write a new one instead. Don't use `drizzle-kit push` or `drizzle-kit migrate`.
 
-`drizzle-orm` and `drizzle-kit` are pinned to the 1.0 beta, which has Netlify Database's adapter and migration format.
+To apply migrations to Supabase by hand, run `DATABASE_URL="…" npm run db:migrate`.
+
+`drizzle-orm` and `drizzle-kit` are pinned to the 1.0 beta, which writes migrations in this folder-per-migration format.
 
 ## Sign-in
 
@@ -89,14 +92,13 @@ The `user`, `organization` (a PVM client) and `member` tables already use Better
 
 ## Deploying to Netlify
 
-The Netlify project `vat-rules-checker` already exists, but with no deploys yet.
+The Netlify project `vat-rules-checker` builds from `main` on GitHub. Until the app's first successful build, the site serves the prototype, which was deployed by hand; that build replaces it.
 
-- **Netlify Database only runs on Netlify's credit-based plans.** The current team is on the legacy Starter plan, so before the first deploy, either:
-  - put this project on a team that's on a credit-based plan, or
-  - use Postgres from elsewhere (Neon, Supabase) by setting `NETLIFY_DB_URL` to its connection string and applying the migrations yourself.
+- **Database:** create a Supabase project (the free plan is fine), then in Supabase choose **Connect** and copy the **Transaction pooler** connection string (port 6543), with your database password filled in. That's `DATABASE_URL`. The first build creates the tables and the demo data.
 - **Environment variables** (Project configuration > Environment variables):
+  - `DATABASE_URL`: required. The Supabase connection string above.
   - `SESSION_SECRET`: required. A long random string, e.g. from `openssl rand -base64 32`.
   - `DEMO_PASSWORD`: the shared password until Better Auth is in. Leave it unset to switch sign-in off.
   - `VIES_REQUESTER_COUNTRY` and `VIES_REQUESTER_NUMBER`: optional. Set them to the client's own VAT number to get a VIES consultation number with each check, which is the evidence an auditor asks for.
 - **Deploy:** connect the Git repo in Netlify, or run `npx netlify-cli deploy` from this folder.
-- **Preview data:** deploy previews get a copy of the production database, and preview links are public, so don't share them once real client data is in.
+- **Deploy previews** use the same `DATABASE_URL` unless you scope it to Production in Netlify, so a preview runs migrations against the real database and shows real data. Preview links are public, so don't share them once real client data is in. For a separate preview database, create a second Supabase project and set `DATABASE_URL` for the Deploy Previews context to its connection string.

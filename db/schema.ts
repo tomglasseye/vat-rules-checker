@@ -1,5 +1,5 @@
 // Database schema. Edit this, then run `npm run db:generate` to write a migration into
-// netlify/database/migrations (Netlify applies those on deploy).
+// db/migrations (`npm run db:migrate` applies those, and Netlify runs it before every build).
 //
 // `user`, `organization` and `member` use Better Auth's table and field names, so its
 // organization and admin plugins can take them over when real sign-in is added.

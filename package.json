@@ -10,11 +10,11 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "db:generate": "drizzle-kit generate",
+    "db:migrate": "tsx scripts/db-migrate.ts",
     "db:local": "tsx scripts/db-local.ts",
     "db:local:reset": "tsx scripts/db-local.ts --reset"
   },
   "dependencies": {
-    "@netlify/database": "^2.0.1",
     "@react-router/node": "^8.0.0",
     "drizzle-orm": "1.0.0-beta.22",
     "isbot": "^5.1.43",

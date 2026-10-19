@@ -12,7 +12,7 @@ try {
     await db.reset();
     console.log("Local database wiped.");
   }
-  const applied = await db.applyMigrations("netlify/database/migrations");
+  const applied = await db.applyMigrations("db/migrations");
   console.log(applied.length ? `Local database: applied ${applied.join(", ")}` : "Local database is up to date.");
 } finally {
   await db.stop();

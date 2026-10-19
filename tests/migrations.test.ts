@@ -1,14 +1,18 @@
-// Applies every migration to a throwaway local Postgres and checks the seed data is usable.
+// Applies every migration to a throwaway local Postgres with the same runner Netlify builds use
+// against Supabase (db/migrate.ts), and checks the seed data is usable.
 import { NetlifyDB } from "@netlify/database-dev";
 import { afterAll, beforeAll, expect, test } from "vitest";
 import { health, type Rule, type TestScenario } from "../app/engine/index";
+import { migrate } from "../db/migrate";
 
 let db: NetlifyDB;
+let url: string;
+let firstRun: string[];
 
 beforeAll(async () => {
   db = new NetlifyDB({ logger: () => {} });
-  await db.start();
-  await db.applyMigrations("./netlify/database/migrations");
+  url = await db.start();
+  firstRun = await migrate(url, "./db/migrations", () => {});
 });
 afterAll(async () => {
   await db?.stop();
@@ -46,4 +50,11 @@ test("the 19 Oct migration moves the demo draft to the new starter rules and lea
 
 test("only one draft per client", async () => {
   await expect(db.query(`INSERT INTO rule_set (id, organization_id, status, rules, tests) VALUES ('x', 'org_demo', 'draft', '[]', '[]')`)).rejects.toThrow();
+});
+
+test("the migration runner applies each migration once", async () => {
+  expect(firstRun).toEqual(["20261016073952_init", "20261016074013_seed_demo", "20261019154653_uk_stock_reroute"]);
+  expect(await migrate(url, "./db/migrations", () => {})).toEqual([]);
+  const { rows } = await db.query<{ n: number }>(`SELECT count(*)::int AS n FROM app_migrations`);
+  expect(rows[0].n).toBe(3);
 });
