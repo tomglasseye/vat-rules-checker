@@ -1,5 +1,5 @@
 import { NavLink, Outlet, useRouteLoaderData } from "react-router";
-import { cx } from "~/components/ui";
+import { Breadcrumbs, cx } from "~/components/ui";
 import { getClientBySlug } from "~/models/clients.server";
 import { getPublished } from "~/models/rules.server";
 import type { Route } from "./+types/client-layout";
@@ -16,16 +16,19 @@ export function useClient() {
 }
 
 const tab = ({ isActive }: { isActive: boolean }) =>
-  cx("-mb-px inline-flex items-center border-b-[2.5px] px-3 pt-2 pb-2 text-[14px] font-semibold whitespace-nowrap", isActive ? "border-accent text-ink" : "border-transparent text-muted hover:text-ink");
+  cx("-mb-px inline-flex items-center border-b-2 px-4 py-3 text-[14px] font-medium whitespace-nowrap", isActive ? "border-primary text-accent" : "border-transparent text-nav hover:text-accent");
 
 export default function ClientLayout({ loaderData }: Route.ComponentProps) {
   const { client, liveVersion } = loaderData;
   const base = `/admin/clients/${client.slug}`;
   return (
     <>
-      <div className="mb-3 flex flex-wrap items-baseline gap-x-3 gap-y-1">
-        <h1 className="wide text-[24px] font-bold tracking-[-0.01em] sm:text-[28px]">{client.name}</h1>
-        <span className="text-[14px] text-muted">{liveVersion ? `Live rules: version ${liveVersion}` : "No rules published yet"}</span>
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-x-5 gap-y-1.5">
+        <div className="flex min-w-0 flex-wrap items-baseline gap-x-3 gap-y-1">
+          <h1 className="text-[18px] font-medium leading-tight">{client.name}</h1>
+          <span className="text-[13.5px] text-muted">{liveVersion ? `Live rules: version ${liveVersion}` : "No rules published yet"}</span>
+        </div>
+        <Breadcrumbs items={[{ label: "Clients", to: "/admin" }, { label: client.name }]} />
       </div>
       <nav aria-label={`${client.name} admin`} className="mb-5 flex gap-1 overflow-x-auto border-b border-line [scrollbar-width:none]">
         <NavLink to={base} end className={tab}>Draft rules</NavLink>

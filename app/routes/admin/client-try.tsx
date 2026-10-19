@@ -45,7 +45,7 @@ function SaveAsTest({ inp }: { inp: CheckInput }) {
   return (
     <fetcher.Form method="post" className="grid gap-2" onSubmit={() => setLabel("")}>
       <input type="hidden" name="sale" value={JSON.stringify(inp)} />
-      <label htmlFor="label" className="text-[13px] font-semibold">Save as a test scenario</label>
+      <label htmlFor="label" className="text-[14px] font-medium">Save as a test scenario</label>
       <div className="flex flex-wrap gap-2">
         <input id="label" name="label" value={label} onChange={(e) => setLabel(e.target.value)} placeholder={describeInputs(inp)} className="field-control flex-[1_1_200px]" />
         <Button type="submit" disabled={fetcher.state !== "idle"}>Save test</Button>

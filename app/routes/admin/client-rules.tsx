@@ -102,7 +102,7 @@ export default function ClientRules({ loaderData }: Route.ComponentProps) {
 
   return (
     <>
-      <div className="sticky top-0 z-10 -mx-4 mb-4 border-b border-line bg-bg/95 px-4 py-2.5 backdrop-blur-sm sm:-mx-7 sm:px-7">
+      <div className="sticky top-[70px] z-20 -mx-4 mb-4 border-b border-line bg-bg/95 px-4 py-2.5 backdrop-blur-sm sm:-mx-6 sm:px-6">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <p className="text-[13.5px]">
             {dirty ? (
@@ -143,13 +143,13 @@ export default function ClientRules({ loaderData }: Route.ComponentProps) {
       ) : null}
 
       {publishing ? (
-        <Card className="mb-4 p-4">
-          <h2 className="wide text-[17px] font-bold">Publish a new version for {client.name}</h2>
+        <Card className="mb-4 p-5">
+          <h2 className="text-[15px] font-medium">Publish a new version for {client.name}</h2>
           <p className="mt-1 text-[14px] text-muted">
             Version {(live?.version ?? 0) + 1} replaces {live ? `version ${live.version}` : "nothing"} for everyone at {client.name} as soon as you publish. Saved checks keep the version they were made with.
             {h.signoff ? ` ${h.signoff} rule${h.signoff === 1 ? " is" : "s are"} still marked “needs sign-off”.` : ""}
           </p>
-          <label htmlFor="summary" className="mt-3 block text-[13px] font-semibold">What changed</label>
+          <label htmlFor="summary" className="mt-3 block text-[14px] font-medium">What changed</label>
           <textarea id="summary" value={summary} onChange={(e) => setSummary(e.target.value)} className="field-control mt-1.5" placeholder="e.g. Triangulation now also covers customers based outside the delivery country" />
           <div className="mt-3 flex flex-wrap gap-2">
             <Button variant="primary" disabled={busy || !h.ok} onClick={() => submit("publish")}>{busy ? "Publishing…" : `Publish version ${(live?.version ?? 0) + 1}`}</Button>

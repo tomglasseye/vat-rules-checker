@@ -1,11 +1,7 @@
-import { useState } from "react";
-import { cx, IconMoon, IconSun, IconSystem } from "./ui";
+import { useEffect, useState } from "react";
+import { IconMoon, IconSun } from "./ui";
 
 export type ThemeChoice = "system" | "light" | "dark";
-
-const ORDER: ThemeChoice[] = ["system", "light", "dark"];
-const LABEL: Record<ThemeChoice, string> = { system: "Match system", light: "Light", dark: "Dark" };
-const ICON = { system: IconSystem, light: IconSun, dark: IconMoon };
 
 /** Saved in a cookie so the server renders the right theme and there's no flash on load */
 export function applyTheme(t: ThemeChoice) {
@@ -15,32 +11,34 @@ export function applyTheme(t: ThemeChoice) {
   document.cookie = `theme=${t}; path=/; max-age=31536000; samesite=lax`;
 }
 
+/** One button in the top bar, as in Minia: shows a moon in light mode and a sun in dark mode.
+ *  Until it's pressed the app follows the system setting. */
 export function ThemeToggle({ initial }: { initial: ThemeChoice }) {
   const [theme, setTheme] = useState<ThemeChoice>(initial);
+  const [systemDark, setSystemDark] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia("(prefers-color-scheme: dark)");
+    setSystemDark(mq.matches);
+    const on = (e: MediaQueryListEvent) => setSystemDark(e.matches);
+    mq.addEventListener("change", on);
+    return () => mq.removeEventListener("change", on);
+  }, []);
+  const dark = theme === "dark" || (theme === "system" && systemDark);
+  const label = dark ? "Switch to light mode" : "Switch to dark mode";
   return (
-    <div role="radiogroup" aria-label="Colour theme" className="inline-flex rounded-lg border border-line bg-sunken p-[3px]">
-      {ORDER.map((t) => {
-        const I = ICON[t];
-        const on = theme === t;
-        return (
-          <button
-            key={t}
-            type="button"
-            role="radio"
-            aria-checked={on}
-            aria-label={LABEL[t]}
-            title={LABEL[t]}
-            onClick={() => {
-              setTheme(t);
-              applyTheme(t);
-            }}
-            className={cx("inline-grid size-7 place-items-center rounded-md", on ? "bg-surface text-ink shadow-seg" : "text-muted hover:text-ink")}
-          >
-            <I />
-          </button>
-        );
-      })}
-    </div>
+    <button
+      type="button"
+      aria-label={label}
+      title={label}
+      onClick={() => {
+        const next: ThemeChoice = dark ? "light" : "dark";
+        setTheme(next);
+        applyTheme(next);
+      }}
+      className="inline-grid size-10 place-items-center rounded-btn text-nav hover:bg-btn hover:text-head"
+    >
+      {dark ? <IconSun className="size-[18px]" /> : <IconMoon className="size-[18px]" />}
+    </button>
   );
 }
 

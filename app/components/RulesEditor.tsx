@@ -6,7 +6,7 @@ import {
   ENTITY, LEVEL_LABEL, ORIGIN_LABEL, VALUE_LABEL, VIES_LABEL, ZONE_LABEL, describeInputs, fmtPct, health, inputToParams,
   scenarioFromResult, type Health, type Rates, type Rule, type TestScenario, type When,
 } from "~/engine";
-import { Button, Chip, IconButton, IconDown, IconEdit, IconUp, LevelIcon, Stat, Stats, cx } from "./ui";
+import { Button, Chip, IconButton, IconDown, IconEdit, IconUp, LevelIcon, Stat, Stats, buttonClass, cx } from "./ui";
 
 const num = (n: number) => n.toLocaleString("en-GB");
 
@@ -25,9 +25,9 @@ function Conds({ w }: { w: When }) {
     if (!Array.isArray(v)) return;
     chips.push(
       v.length === 0 ? (
-        <span key={k} className="rounded-[5px] bg-block-soft px-2 py-0.5 text-[13px] text-block"><b className="mr-1 text-xs font-semibold">{label}</b>nothing selected</span>
+        <span key={k} className="rounded-field bg-block-soft px-2 py-0.5 text-[13px] text-block"><b className="mr-1 text-xs font-semibold">{label}</b>nothing selected</span>
       ) : (
-        <span key={k} className="rounded-[5px] bg-sunken px-2 py-0.5 text-[13px]"><b className="mr-1 text-xs font-semibold text-muted">{label}</b>{v.map(map).join(" / ")}</span>
+        <span key={k} className="rounded-field bg-sunken px-2 py-0.5 text-[13px]"><b className="mr-1 text-xs font-semibold text-muted">{label}</b>{v.map(map).join(" / ")}</span>
       ),
     );
   };
@@ -35,11 +35,11 @@ function Conds({ w }: { w: When }) {
   list("type", "Customer", (t) => t);
   list("destZone", "Delivered to", (z) => ZONE_LABEL[z as keyof typeof ZONE_LABEL] ?? z);
   list("custZone", "Customer in", (z) => ZONE_LABEL[z as keyof typeof ZONE_LABEL] ?? z);
-  if (typeof w.dispatchIsDest === "boolean") chips.push(<span key="did" className="rounded-[5px] bg-sunken px-2 py-0.5 text-[13px]">{w.dispatchIsDest ? "Ships from = delivered to" : "Ships from ≠ delivered to"}</span>);
-  if (typeof w.custIsDest === "boolean") chips.push(<span key="cid" className="rounded-[5px] bg-sunken px-2 py-0.5 text-[13px]">{w.custIsDest ? "Customer country = delivery country" : "Customer country ≠ delivery country"}</span>);
+  if (typeof w.dispatchIsDest === "boolean") chips.push(<span key="did" className="rounded-field bg-sunken px-2 py-0.5 text-[13px]">{w.dispatchIsDest ? "Ships from = delivered to" : "Ships from ≠ delivered to"}</span>);
+  if (typeof w.custIsDest === "boolean") chips.push(<span key="cid" className="rounded-field bg-sunken px-2 py-0.5 text-[13px]">{w.custIsDest ? "Customer country = delivery country" : "Customer country ≠ delivery country"}</span>);
   list("vies", "VIES", (v) => VIES_LABEL[v as keyof typeof VIES_LABEL] ?? v);
   list("value", "Parcel", (v) => VALUE_LABEL[v as keyof typeof VALUE_LABEL] ?? v);
-  if (!chips.length) chips.push(<span key="any" className="rounded-[5px] bg-sunken px-2 py-0.5 text-[13px]">Any sale</span>);
+  if (!chips.length) chips.push(<span key="any" className="rounded-field bg-sunken px-2 py-0.5 text-[13px]">Any sale</span>);
   return <div className="flex flex-wrap gap-1.5">{chips}</div>;
 }
 
@@ -60,7 +60,7 @@ const FIELD_DEFS = [
 function Field({ label, htmlFor, children, className }: { label: string; htmlFor?: string; children: ReactNode; className?: string }) {
   return (
     <div className={cx("grid min-w-0 gap-1.5", className)}>
-      {htmlFor ? <label htmlFor={htmlFor} className="text-[13px] font-semibold">{label}</label> : <span className="text-[13px] font-semibold">{label}</span>}
+      {htmlFor ? <label htmlFor={htmlFor} className="text-[14px] font-medium">{label}</label> : <span className="text-[13px] font-semibold">{label}</span>}
       {children}
     </div>
   );
@@ -100,7 +100,7 @@ function RuleForm({ rule, onChange, onClose, onDuplicate, onDelete }: { rule: Ru
       </Field>
 
       <fieldset className="grid min-w-0 gap-3">
-        <legend className="wide mb-2 text-[15px] font-bold">When the sale matches</legend>
+        <legend className="mb-2 text-[15px] font-medium text-head">When the sale matches</legend>
         <div className="grid gap-x-4.5 gap-y-3 md:grid-cols-2">
           {FIELD_DEFS.map((def) => {
             const cur = w[def.k] as string[] | undefined;
@@ -149,7 +149,7 @@ function RuleForm({ rule, onChange, onClose, onDuplicate, onDelete }: { rule: Ru
       </fieldset>
 
       <fieldset className="grid min-w-0 gap-3">
-        <legend className="wide mb-2 text-[15px] font-bold">Then</legend>
+        <legend className="mb-2 text-[15px] font-medium text-head">Then</legend>
         <div className="grid gap-x-4.5 gap-y-3 md:grid-cols-2">
           <Field label="Tax code" htmlFor={`${id}-code`}>
             <input id={`${id}-code`} className="field-control" value={t.code} onChange={(e) => setThen({ code: e.target.value })} />
@@ -232,7 +232,7 @@ function RuleForm({ rule, onChange, onClose, onDuplicate, onDelete }: { rule: Ru
         <Button
           size="sm"
           variant="danger"
-          className={armed ? "border-block! bg-block! text-surface!" : undefined}
+          className={armed ? "border-block! bg-block! text-white!" : undefined}
           onClick={() => (armed ? onDelete() : setArmed(true))}
         >
           {armed ? "Click again to delete" : "Delete rule"}
@@ -340,9 +340,9 @@ export function RulesEditor({
             aria-selected={tab === k}
             onClick={() => setTab(k)}
             className={cx(
-              "rounded-full border px-3 py-1 text-[13px] font-semibold",
-              tab === k ? "border-ink bg-ink text-surface" : "border-line bg-surface text-ink hover:border-accent hover:text-accent",
-              k === "tests" && failing > 0 && tab !== k && "border-block text-block",
+              "rounded-btn px-3 py-1.5 text-[13px] font-medium",
+              tab === k ? "bg-accent-soft text-accent" : "bg-btn text-muted hover:text-head",
+              k === "tests" && failing > 0 && tab !== k && "bg-block-soft text-block",
             )}
           >
             {label}
@@ -373,7 +373,7 @@ export function RulesEditor({
                   type="button"
                   aria-pressed={filter === k}
                   onClick={() => setFilter(k)}
-                  className={cx("rounded-full border px-2.5 py-1 text-[13px]", filter === k ? "border-ink bg-ink text-surface" : "border-line bg-surface hover:border-accent hover:text-accent")}
+                  className={cx("rounded-btn px-2.5 py-1 text-[12.5px] font-medium", filter === k ? "bg-accent-soft text-accent" : "bg-btn text-muted hover:text-head")}
                 >
                   {label}
                 </button>
@@ -387,10 +387,10 @@ export function RulesEditor({
               const t = rule.then;
               const hit = hits[i] ?? null;
               return (
-                <li key={rule.id} id={`rule-${rule.id}`} className="scroll-mt-5 rounded-card border border-line bg-surface">
+                <li key={rule.id} id={`rule-${rule.id}`} className="scroll-mt-36 rounded-card border border-line bg-surface">
                   <div className="flex flex-wrap items-center gap-x-3 gap-y-2.5 px-3.5 py-3">
                     <span className="tabular min-w-6 font-mono text-[13px] font-semibold text-muted">{String(i + 1).padStart(2, "0")}</span>
-                    <h3 className="min-w-0 flex-[1_1_220px] text-base font-[680]">{rule.name || <span className="text-muted">Untitled rule</span>}</h3>
+                    <h3 className="min-w-0 flex-[1_1_220px] text-[15px] font-medium">{rule.name || <span className="text-muted">Untitled rule</span>}</h3>
                     {rule.signoff ? <Chip tone="outline-warn">Needs sign-off</Chip> : null}
                     <span className={cx("tabular text-[12.5px] whitespace-nowrap", hit === 0 ? "font-semibold text-block" : "text-muted")}>
                       {hit === null ? "" : hit === 0 ? "Never matches" : `Matches ${num(hit)} combinations`}
@@ -527,7 +527,7 @@ function TestsPanel({
               ) : null}
             </div>
             <div className="col-start-2 flex flex-wrap gap-1.5 sm:col-start-3 sm:justify-end">
-              <Link to={tryHref(inputToParams(t.inp))} className="inline-flex min-h-8 items-center rounded-field border border-line bg-surface px-2.5 text-[13px] font-semibold hover:border-accent">Try it</Link>
+              <Link to={tryHref(inputToParams(t.inp))} className={buttonClass("default", "sm")}>Try it</Link>
               {!r.pass ? (
                 <Button size="sm" onClick={() => setTests((ts) => ts.map((x) => (x.id === t.id ? scenarioFromResult(t.id, t.label, { ...t.inp }, r.res) : x)))}>
                   Accept new answer

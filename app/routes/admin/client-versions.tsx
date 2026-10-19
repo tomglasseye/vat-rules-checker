@@ -1,5 +1,5 @@
 import { data, Form, useNavigation } from "react-router";
-import { Button, Card, PageHeader } from "~/components/ui";
+import { Button, Card, Chip, PageHeader } from "~/components/ui";
 import type { Rule } from "~/engine";
 import { authContext } from "~/lib/auth.server";
 import { getClientBySlug } from "~/models/clients.server";
@@ -70,11 +70,11 @@ export default function ClientVersions({ loaderData, actionData }: Route.Compone
             ].filter(Boolean);
             return (
               <li key={v.id}>
-                <Card className="flex flex-wrap items-start justify-between gap-3 px-4 py-3.5">
+                <Card className="flex flex-wrap items-start justify-between gap-3 px-5 py-4">
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-baseline gap-x-2.5">
-                      <h3 className="text-[16px] font-bold">Version {v.version}</h3>
-                      {i === 0 ? <span className="text-[12.5px] font-semibold text-ok">Live</span> : null}
+                      <h3 className="text-[15px] font-medium">Version {v.version}</h3>
+                      {i === 0 ? <Chip tone="ok">Live</Chip> : null}
                       <span className="text-[13px] text-muted">
                         {v.publishedAt ? new Date(v.publishedAt).toLocaleString("en-GB", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }) : ""} · {v.publishedBy}
                       </span>

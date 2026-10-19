@@ -55,25 +55,25 @@ export default function History({ loaderData }: Route.ComponentProps) {
         </Card>
       ) : (
         <Card className="overflow-x-auto">
-          <table className="w-full min-w-[760px] border-collapse text-left text-[14px]">
+          <table className="data-table min-w-[760px]">
             <thead>
-              <tr className="border-b border-line text-2xs font-semibold tracking-[0.08em] text-muted uppercase">
-                <th className="px-4 py-2.5 font-semibold">When</th>
-                <th className="px-4 py-2.5 font-semibold">Order ref</th>
-                <th className="px-4 py-2.5 font-semibold">Sale</th>
-                <th className="px-4 py-2.5 font-semibold">Result</th>
-                <th className="px-4 py-2.5 font-semibold">By</th>
+              <tr>
+                <th>When</th>
+                <th>Order ref</th>
+                <th>Sale</th>
+                <th>Result</th>
+                <th>By</th>
               </tr>
             </thead>
             <tbody>
               {rows.map((r) => (
-                <tr key={r.id} className="border-b border-line last:border-b-0 hover:bg-sunken/60">
-                  <td className="px-4 py-3 align-top whitespace-nowrap">
+                <tr key={r.id} className="hover:bg-sunken">
+                  <td className="align-top whitespace-nowrap">
                     <Link to={`/history/${r.id}`} className="font-semibold text-accent underline-offset-3 hover:underline">{fmtWhen(r.at)}</Link>
                   </td>
-                  <td className="px-4 py-3 align-top font-mono text-[13px]">{r.orderRef ?? <span className="text-muted">–</span>}</td>
-                  <td className="px-4 py-3 align-top text-muted">{r.route}</td>
-                  <td className="px-4 py-3 align-top">
+                  <td className="align-top font-mono text-[13px]">{r.orderRef ?? <span className="text-muted">–</span>}</td>
+                  <td className="align-top text-muted">{r.route}</td>
+                  <td className="align-top">
                     <div className="flex items-start gap-2">
                       <LevelIcon level={r.level} className="mt-0.5" />
                       <div>
@@ -82,7 +82,7 @@ export default function History({ loaderData }: Route.ComponentProps) {
                       </div>
                     </div>
                   </td>
-                  <td className="px-4 py-3 align-top whitespace-nowrap text-muted">{r.by}</td>
+                  <td className="align-top whitespace-nowrap text-muted">{r.by}</td>
                 </tr>
               ))}
             </tbody>

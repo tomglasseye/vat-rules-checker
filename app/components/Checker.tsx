@@ -25,8 +25,8 @@ type VatUi = { status: "idle" } | { status: "checking" } | { status: "error"; me
 function Cell({ n, label, htmlFor, labelId, children, className, dim }: { n: number; label: string; htmlFor?: string; labelId?: string; children: ReactNode; className?: string; dim?: boolean }) {
   const Lab = htmlFor ? "label" : "span";
   return (
-    <div className={cx("flex min-w-0 flex-col gap-2 border-t border-line px-3.5 pt-3 pb-3.5", className)}>
-      <Lab {...(htmlFor ? { htmlFor } : {})} id={labelId} className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.06em] text-muted">
+    <div className={cx("flex min-w-0 flex-col gap-2.5 border-t border-line px-5 pt-4 pb-5", className)}>
+      <Lab {...(htmlFor ? { htmlFor } : {})} id={labelId} className="flex items-center gap-2 text-[14px] font-medium text-head">
         <BoxNo n={n} dim={dim} />
         {label}
       </Lab>
@@ -83,7 +83,7 @@ function VatStatus({ vat, inp }: { vat: VatUi; inp: CheckInput }) {
       {head}
       {info.state === "valid" ? (
         info.name || info.address ? (
-          <div className="mt-2 grid gap-0.5 rounded-lg bg-sunken px-3 py-2.5 text-sm">
+          <div className="mt-2 grid gap-0.5 rounded-card bg-sunken px-3 py-2.5 text-sm">
             <div className="eyebrow">Registered to (from VIES)</div>
             <div className="font-semibold">{info.name || "Name not shared"}</div>
             {info.address ? <div className="whitespace-pre-line text-muted">{info.address}</div> : null}
@@ -231,10 +231,10 @@ export function Checker({ rules, rates, initial, organizationId, showInternals, 
 
       <section aria-live="polite" aria-label="Result" className="overflow-hidden rounded-card border border-line bg-surface">
         <StatusBar level={res.level}>{LEVEL_LABEL[res.level]}</StatusBar>
-        <div className="grid gap-1 px-5 pt-4.5 pb-1.5">
+        <div className="grid gap-1.5 px-5 pt-5 pb-2">
           {res.rate !== null ? (
             <>
-              <div className="wide tabular font-display text-[clamp(48px,7vw,68px)] leading-none font-[760] tracking-[-0.02em]">{fmtPct(res.rate)}</div>
+              <div className="tabular text-[clamp(44px,6vw,60px)] leading-none font-semibold tracking-[-0.02em] text-head">{fmtPct(res.rate)}</div>
               <div className="font-mono text-[15px] font-semibold tracking-[0.03em] uppercase [overflow-wrap:anywhere]">{res.code}</div>
             </>
           ) : (
@@ -245,8 +245,8 @@ export function Checker({ rules, rates, initial, organizationId, showInternals, 
 
         {ent && res.level !== "block" ? (
           <Section title="Invoice from">
-            <div className="flex items-start gap-3 text-[14.5px]">
-              <span className={cx("shrink-0 rounded-[5px] border-[1.5px] border-current px-2 py-1 font-mono text-[13px] font-semibold", res.entity === "UK" ? "text-ink" : "text-accent")}>{res.entity}</span>
+            <div className="flex items-start gap-3 text-[14px]">
+              <span className={cx("shrink-0 rounded-field px-2 py-1 font-mono text-[13px] font-semibold", res.entity === "UK" ? "bg-btn text-head" : "bg-accent-soft text-accent")}>{res.entity}</span>
               <div>
                 <b>{ent.short}</b>
                 <div className="text-[13.5px] text-muted">{ent.text}</div>
@@ -285,7 +285,7 @@ export function Checker({ rules, rates, initial, organizationId, showInternals, 
           {versionLabel ? <p className="text-[12.5px] text-muted">{versionLabel}</p> : null}
         </Section>
 
-        {footer ? <div className="border-t border-line px-5 pt-3 pb-4">{footer({ inp, vies: viesInfo, result: res })}</div> : null}
+        {footer ? <div className="border-t border-line px-5 pt-4 pb-5">{footer({ inp, vies: viesInfo, result: res })}</div> : null}
       </section>
     </div>
   );
@@ -293,7 +293,7 @@ export function Checker({ rules, rates, initial, organizationId, showInternals, 
 
 function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
-    <div className="grid gap-2 border-t border-line px-5 py-3.5">
+    <div className="grid gap-2 border-t border-line px-5 py-4">
       <div className="eyebrow">{title}</div>
       {children}
     </div>
@@ -304,8 +304,8 @@ function Wording({ text }: { text: string }) {
   const [copied, setCopied] = useState(false);
   useEffect(() => setCopied(false), [text]);
   return (
-    <div className="flex items-start gap-2.5 rounded-lg bg-sunken py-3 pr-3 pl-3.5">
-      <p className="min-w-0 flex-1 text-[15px]">{text}</p>
+    <div className="flex items-start gap-2.5 rounded-card border border-line bg-sunken py-3 pr-3 pl-3.5">
+      <p className="min-w-0 flex-1 text-[14.5px]">{text}</p>
       <Button
         size="sm"
         onClick={async () => {
@@ -343,7 +343,7 @@ export function SaveToLog({ ruleSetId, inp, vies }: { ruleSetId: string; inp: Ch
       <input type="hidden" name="ruleSetId" value={ruleSetId} />
       <input type="hidden" name="sale" value={JSON.stringify(sale)} />
       <input type="hidden" name="viesLookupId" value={vies && vies.number === (inp.vatNumber ?? "").toUpperCase() ? vies.id : ""} />
-      <label htmlFor="orderRef" className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.06em] text-muted">
+      <label htmlFor="orderRef" className="flex items-center gap-2 text-[14px] font-medium text-head">
         <BoxNo n={6} />Order reference
       </label>
       <div className="flex flex-wrap gap-2">

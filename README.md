@@ -9,7 +9,7 @@ The rules started as Miranda's EU VAT Calculator spreadsheet (v3) and follow her
 ## Stack
 
 - **React Router 8** (framework mode) on **Netlify**. Pages render on the server, and loaders and actions run as Netlify Functions, so there's no separate API.
-- **Tailwind CSS v4**. Colour tokens are set in `app/app.css`; light and dark follow the system setting, with a toggle saved in a cookie.
+- **Tailwind CSS v4**, styled after the Minia admin template: IBM Plex Sans, an indigo primary, a sidebar and top bar, and flat bordered cards. Colour tokens are set in `app/app.css`; light and dark follow the system setting until someone uses the toggle in the top bar, which is saved in a cookie.
 - **Postgres** through **Netlify Database**, using **Drizzle ORM**. Locally it's a real Postgres engine in `.netlify/db`, so nothing needs installing.
 - **Sign-in:** placeholder demo accounts for now, laid out for **Better Auth** (see below).
 - **Vitest** for the rules engine and migrations.

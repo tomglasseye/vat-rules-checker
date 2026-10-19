@@ -1,5 +1,5 @@
 import { data, Form, useNavigation } from "react-router";
-import { Banner, Button, Card, PageHeader } from "~/components/ui";
+import { Banner, Button, Card, CardHeader, PageHeader } from "~/components/ui";
 import { addMember, getClientBySlug, listMembers, removeMember, type MemberRole } from "~/models/clients.server";
 import type { Route } from "./+types/client-users";
 
@@ -46,22 +46,22 @@ export default function ClientUsers({ loaderData, actionData }: Route.ComponentP
       </div>
       <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
         <Card className="overflow-x-auto">
-          <table className="w-full min-w-[520px] border-collapse text-left text-[14px]">
+          <table className="data-table min-w-[520px]">
             <thead>
-              <tr className="border-b border-line text-2xs font-semibold tracking-[0.08em] text-muted uppercase">
-                <th className="px-4 py-2.5 font-semibold">Name</th>
-                <th className="px-4 py-2.5 font-semibold">Email</th>
-                <th className="px-4 py-2.5 font-semibold">Role</th>
-                <th className="px-4 py-2.5"><span className="sr-only">Actions</span></th>
+              <tr>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Role</th>
+                <th><span className="sr-only">Actions</span></th>
               </tr>
             </thead>
             <tbody>
               {members.map((m) => (
-                <tr key={m.memberId} className="border-b border-line last:border-b-0">
-                  <td className="px-4 py-3 font-semibold">{m.name}</td>
-                  <td className="px-4 py-3 font-mono text-[13px]">{m.email}</td>
-                  <td className="px-4 py-3">{ROLES.find((r) => r.value === m.role)?.label ?? m.role}</td>
-                  <td className="px-4 py-3 text-right">
+                <tr key={m.memberId}>
+                  <td className="font-semibold">{m.name}</td>
+                  <td className="font-mono text-[13px]">{m.email}</td>
+                  <td>{ROLES.find((r) => r.value === m.role)?.label ?? m.role}</td>
+                  <td className="text-right">
                     <Form method="post">
                       <input type="hidden" name="intent" value="remove" />
                       <input type="hidden" name="memberId" value={m.memberId} />
@@ -77,20 +77,20 @@ export default function ClientUsers({ loaderData, actionData }: Route.ComponentP
           </table>
         </Card>
 
-        <Card className="p-4">
-          <h2 className="wide mb-3 text-[17px] font-bold">Add someone</h2>
-          <Form method="post" className="grid gap-3">
+        <Card>
+          <CardHeader title="Add someone" />
+          <Form method="post" className="grid gap-3.5 p-5">
             <input type="hidden" name="intent" value="add" />
             <div className="grid gap-1.5">
-              <label htmlFor="name" className="text-[13px] font-semibold">Name</label>
+              <label htmlFor="name" className="text-[14px] font-medium">Name</label>
               <input id="name" name="name" className="field-control" maxLength={120} />
             </div>
             <div className="grid gap-1.5">
-              <label htmlFor="email" className="text-[13px] font-semibold">Email</label>
+              <label htmlFor="email" className="text-[14px] font-medium">Email</label>
               <input id="email" name="email" type="email" required className="field-control" />
             </div>
             <div className="grid gap-1.5">
-              <label htmlFor="role" className="text-[13px] font-semibold">Role</label>
+              <label htmlFor="role" className="text-[14px] font-medium">Role</label>
               <select id="role" name="role" className="field-control" defaultValue="member">
                 {ROLES.map((r) => (
                   <option key={r.value} value={r.value}>{r.label}: {r.hint}</option>

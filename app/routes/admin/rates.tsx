@@ -1,5 +1,5 @@
 import { data, Form, useNavigation } from "react-router";
-import { Button, Card, Chip, PageHeader } from "~/components/ui";
+import { Button, Card, CardHeader, Chip, PageHeader } from "~/components/ui";
 import { COUNTRY_CODE, RATE_COUNTRIES, fmtPct, placeLabel } from "~/engine";
 import { authContext } from "~/lib/auth.server";
 import { addRate, allRates, deleteFutureRate, today } from "~/models/rates.server";
@@ -58,19 +58,19 @@ export default function Rates({ loaderData, actionData }: Route.ComponentProps) 
       />
       <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
         <Card className="overflow-x-auto">
-          <table className="w-full min-w-[560px] border-collapse text-left text-[14px]">
+          <table className="data-table min-w-[560px]">
             <thead>
-              <tr className="border-b border-line text-2xs font-semibold tracking-[0.08em] text-muted uppercase">
-                <th className="px-4 py-2.5 font-semibold">Country</th>
-                <th className="px-4 py-2.5 text-right font-semibold">Rate today</th>
-                <th className="px-4 py-2.5 font-semibold">Since</th>
-                <th className="px-4 py-2.5 font-semibold">Scheduled</th>
+              <tr>
+                <th>Country</th>
+                <th className="text-right">Rate today</th>
+                <th>Since</th>
+                <th>Scheduled</th>
               </tr>
             </thead>
             <tbody>
               {byCountry.map((c) => (
-                <tr key={c.country} className="border-b border-line align-top last:border-b-0">
-                  <td className="px-4 py-2.5">
+                <tr key={c.country} className="align-top">
+                  <td>
                     <span className="mr-2 inline-block w-6 font-mono text-[11.5px] text-muted">{c.code}</span>
                     {placeLabel(c.country)}
                     {c.history.length ? (
@@ -82,9 +82,9 @@ export default function Rates({ loaderData, actionData }: Route.ComponentProps) 
                       </details>
                     ) : null}
                   </td>
-                  <td className="tabular px-4 py-2.5 text-right font-mono font-semibold">{c.current ? fmtPct(c.current.rate) : <Chip tone="block">None</Chip>}</td>
-                  <td className="px-4 py-2.5 text-muted" title={c.current?.source ?? undefined}>{c.current ? fmtDate(c.current.from) : "–"}</td>
-                  <td className="px-4 py-2.5">
+                  <td className="tabular text-right font-mono font-semibold">{c.current ? fmtPct(c.current.rate) : <Chip tone="block">None</Chip>}</td>
+                  <td className="text-muted" title={c.current?.source ?? undefined}>{c.current ? fmtDate(c.current.from) : "–"}</td>
+                  <td>
                     {c.upcoming.length ? (
                       <ul className="grid gap-1">
                         {c.upcoming.map((u) => (
@@ -108,12 +108,12 @@ export default function Rates({ loaderData, actionData }: Route.ComponentProps) 
           </table>
         </Card>
 
-        <Card className="p-4 lg:sticky lg:top-4">
-          <h2 className="wide mb-3 text-[17px] font-bold">Add a rate change</h2>
-          <Form method="post" className="grid gap-3">
+        <Card className="lg:sticky lg:top-[94px]">
+          <CardHeader title="Add a rate change" />
+          <Form method="post" className="grid gap-3.5 p-5">
             <input type="hidden" name="intent" value="add" />
             <div className="grid gap-1.5">
-              <label htmlFor="country" className="text-[13px] font-semibold">Country</label>
+              <label htmlFor="country" className="text-[14px] font-medium">Country</label>
               <select id="country" name="country" required className="field-control" defaultValue="">
                 <option value="" disabled>Choose…</option>
                 {RATE_COUNTRIES.map((c) => <option key={c} value={c}>{placeLabel(c)}</option>)}
@@ -121,16 +121,16 @@ export default function Rates({ loaderData, actionData }: Route.ComponentProps) 
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="grid gap-1.5">
-                <label htmlFor="rate" className="text-[13px] font-semibold">Standard rate (%)</label>
+                <label htmlFor="rate" className="text-[14px] font-medium">Standard rate (%)</label>
                 <input id="rate" name="rate" type="number" min={0} max={100} step={0.1} required className="field-control" />
               </div>
               <div className="grid gap-1.5">
-                <label htmlFor="effectiveFrom" className="text-[13px] font-semibold">Applies from</label>
+                <label htmlFor="effectiveFrom" className="text-[14px] font-medium">Applies from</label>
                 <input id="effectiveFrom" name="effectiveFrom" type="date" required defaultValue={day} className="field-control" />
               </div>
             </div>
             <div className="grid gap-1.5">
-              <label htmlFor="source" className="text-[13px] font-semibold">Source</label>
+              <label htmlFor="source" className="text-[14px] font-medium">Source</label>
               <input id="source" name="source" className="field-control" placeholder="e.g. link to the official announcement" />
             </div>
             {actionData ? (

@@ -46,7 +46,7 @@ const fmtWhen = (iso: string) =>
 function Row({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="grid gap-0.5 border-t border-line px-5 py-3 first:border-t-0 sm:grid-cols-[200px_minmax(0,1fr)] sm:gap-4">
-      <dt className="text-[13px] font-semibold text-muted">{label}</dt>
+      <dt className="text-[13.5px] font-medium text-muted">{label}</dt>
       <dd className="min-w-0">{children}</dd>
     </div>
   );
@@ -60,8 +60,8 @@ export default function HistoryDetail({ loaderData }: Route.ComponentProps) {
   return (
     <>
       <PageHeader
-        eyebrow={<Link to="/history" className="hover:text-ink">← Saved checks</Link>}
         title={check.orderRef ? `Order ${check.orderRef}` : "Saved check"}
+        crumbs={[{ label: "Saved checks", to: "/history" }, { label: check.orderRef ?? "Saved check" }]}
         intro={`Saved ${fmtWhen(check.at)} by ${by}. Decided by rules version ${check.version}.`}
         actions={<Link to={`/check?${inputToParams(inp)}`} className={buttonClass("default", "sm")}>Check this sale again</Link>}
       />

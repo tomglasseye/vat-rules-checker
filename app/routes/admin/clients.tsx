@@ -1,5 +1,5 @@
 import { data, Form, Link, redirect, useNavigation } from "react-router";
-import { Button, Card, Chip, PageHeader } from "~/components/ui";
+import { Button, Card, CardHeader, Chip, PageHeader } from "~/components/ui";
 import { authContext } from "~/lib/auth.server";
 import { createClient, listClientsWithStats } from "~/models/clients.server";
 import type { Route } from "./+types/clients";
@@ -30,24 +30,24 @@ export default function Clients({ loaderData, actionData }: Route.ComponentProps
       <PageHeader title="Clients" intro="Each client has its own rules, its own staff accounts and its own log of saved checks. Rules are edited as a draft and only reach client staff when you publish." />
       <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
         <Card className="overflow-x-auto">
-          <table className="w-full min-w-[560px] border-collapse text-left text-[14px]">
+          <table className="data-table min-w-[560px]">
             <thead>
-              <tr className="border-b border-line text-2xs font-semibold tracking-[0.08em] text-muted uppercase">
-                <th className="px-4 py-2.5 font-semibold">Client</th>
-                <th className="px-4 py-2.5 font-semibold">Live rules</th>
-                <th className="px-4 py-2.5 font-semibold">Draft edited</th>
-                <th className="px-4 py-2.5 text-right font-semibold">Staff</th>
-                <th className="px-4 py-2.5 text-right font-semibold">Checks (30 days)</th>
+              <tr>
+                <th>Client</th>
+                <th>Live rules</th>
+                <th>Draft edited</th>
+                <th className="text-right">Staff</th>
+                <th className="text-right">Checks (30 days)</th>
               </tr>
             </thead>
             <tbody>
               {clients.map((c) => (
-                <tr key={c.id} className="border-b border-line last:border-b-0">
-                  <td className="px-4 py-3"><Link to={`/admin/clients/${c.slug}`} className="font-semibold text-accent underline-offset-3 hover:underline">{c.name}</Link></td>
-                  <td className="px-4 py-3">{c.publishedVersion ? `Version ${c.publishedVersion}` : <Chip tone="warn">Not published</Chip>}</td>
-                  <td className="px-4 py-3 text-muted">{fmtDate(c.draftUpdatedAt)}</td>
-                  <td className="tabular px-4 py-3 text-right">{c.users}</td>
-                  <td className="tabular px-4 py-3 text-right">{c.checks30d}</td>
+                <tr key={c.id}>
+                  <td><Link to={`/admin/clients/${c.slug}`} className="font-semibold text-accent underline-offset-3 hover:underline">{c.name}</Link></td>
+                  <td>{c.publishedVersion ? `Version ${c.publishedVersion}` : <Chip tone="warn">Not published</Chip>}</td>
+                  <td className="text-muted">{fmtDate(c.draftUpdatedAt)}</td>
+                  <td className="tabular text-right">{c.users}</td>
+                  <td className="tabular text-right">{c.checks30d}</td>
                 </tr>
               ))}
               {!clients.length ? (
@@ -57,15 +57,15 @@ export default function Clients({ loaderData, actionData }: Route.ComponentProps
           </table>
         </Card>
 
-        <Card className="p-4">
-          <h2 className="wide mb-3 text-[17px] font-bold">Add a client</h2>
-          <Form method="post" className="grid gap-3">
+        <Card>
+          <CardHeader title="Add a client" />
+          <Form method="post" className="grid gap-3.5 p-5">
             <div className="grid gap-1.5">
-              <label htmlFor="name" className="text-[13px] font-semibold">Company name</label>
+              <label htmlFor="name" className="text-[14px] font-medium">Company name</label>
               <input id="name" name="name" required minLength={2} maxLength={120} className="field-control" />
             </div>
             <div className="grid gap-1.5">
-              <label htmlFor="copyFrom" className="text-[13px] font-semibold">Start the rules from</label>
+              <label htmlFor="copyFrom" className="text-[14px] font-medium">Start the rules from</label>
               <select id="copyFrom" name="copyFrom" className="field-control" defaultValue="">
                 <option value="">Starter rules (UK company, NL paper registration)</option>
                 {clients.map((c) => (
