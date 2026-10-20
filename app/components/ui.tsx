@@ -95,6 +95,13 @@ export const IconPercent = ({ className, size = 18 }: IconProps) => (
     <circle cx="13.8" cy="13.8" r="2" {...line} />
   </svg>
 );
+export const IconHelp = ({ className, size = 18 }: IconProps) => (
+  <svg width={size} height={size} viewBox="0 0 20 20" aria-hidden="true" className={className}>
+    <circle cx="10" cy="10" r="7" {...line} />
+    <path d="M7.9 7.9a2.2 2.2 0 0 1 4.2.8c0 1.5-2.1 1.9-2.1 3.1" {...line} />
+    <circle cx="10" cy="14.2" r="0.9" fill="currentColor" />
+  </svg>
+);
 export const IconMenu = ({ className, size = 20 }: IconProps) => (
   <svg width={size} height={size} viewBox="0 0 20 20" aria-hidden="true" className={className}><path d="M3.5 5.5h13M3.5 10h13M3.5 14.5h13" {...line} /></svg>
 );

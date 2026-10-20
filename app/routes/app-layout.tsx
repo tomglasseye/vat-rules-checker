@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Form, Link, Outlet, useLocation, useRouteLoaderData, useSubmit } from "react-router";
 import { ThemeToggle } from "~/components/ThemeToggle";
 import {
-  IconCheckSale, IconChevronDown, IconClients, IconHistory, IconLogout, IconMenu, IconPercent, LogoMark, buttonClass, cx,
+  IconCheckSale, IconChevronDown, IconClients, IconHelp, IconHistory, IconLogout, IconMenu, IconPercent, LogoMark, buttonClass, cx,
 } from "~/components/ui";
 import { authContext, requireUser } from "~/lib/auth.server";
 import type { Route } from "./+types/app-layout";
@@ -153,6 +153,7 @@ export default function AppLayout({ loaderData }: Route.ComponentProps) {
           <NavTitle>Menu</NavTitle>
           <NavItem to="/check" icon={<IconCheckSale />} active={pathname.startsWith("/check")}>Check a sale</NavItem>
           <NavItem to="/history" icon={<IconHistory />} active={pathname.startsWith("/history")}>Saved checks</NavItem>
+          <NavItem to="/help" icon={<IconHelp />} active={pathname.startsWith("/help")}>How to</NavItem>
           {isAdmin ? (
             <>
               <NavTitle>Admin</NavTitle>

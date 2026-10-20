@@ -11,6 +11,7 @@ export default [
     route("check", "routes/check.tsx"),
     route("history", "routes/history.tsx"),
     route("history/:checkId", "routes/history-detail.tsx"),
+    route("help", "routes/help.tsx"),
     route("switch-client", "routes/switch-client.ts"),
 
     // PVM admins only

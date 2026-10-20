@@ -43,7 +43,7 @@ Other commands:
 | Path | What it is |
 |---|---|
 | `app/engine/` | The rules engine: pure TypeScript with no database or DOM. It runs in the browser for instant results and on the server before anything is saved. `starter.ts` holds Miranda's rules and the test scenarios. |
-| `app/routes/` | Pages. `check.tsx` is the checker, `history*.tsx` the saved checks, and `admin/` holds clients, the draft rules editor, trying the draft, published versions, staff accounts and VAT rates. |
+| `app/routes/` | Pages. `check.tsx` is the checker, `history*.tsx` the saved checks, `help.tsx` the How to page (admin sections only show for PVM admins), and `admin/` holds clients, the draft rules editor, trying the draft, published versions, staff accounts and VAT rates. |
 | `app/routes/api.vies.ts` | `POST /api/vies` checks a VAT number with the EU's VIES service and stores the answer as evidence. Signed-in users only. |
 | `app/components/` | `Checker.tsx` (shared by the checker and "Try the draft"), `RulesEditor.tsx` and UI pieces |
 | `app/models/` | Database queries, one file per area |
