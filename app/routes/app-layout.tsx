@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { Form, Link, Outlet, useLocation, useRouteLoaderData, useSubmit } from "react-router";
+import { Form, Link, Outlet, useLocation, useNavigation, useRouteLoaderData, useSubmit } from "react-router";
+import { PageSkeleton, pageKey, useAfter } from "~/components/Skeletons";
 import { ThemeToggle } from "~/components/ThemeToggle";
 import {
   IconCheckSale, IconChevronDown, IconClients, IconHelp, IconHistory, IconLogout, IconMenu, IconPercent, LogoMark, buttonClass, cx,
@@ -129,12 +130,24 @@ function UserMenu({ user, isAdmin }: { user: { name: string; email: string }; is
 export default function AppLayout({ loaderData }: Route.ComponentProps) {
   const root = useRouteLoaderData<{ theme: "system" | "light" | "dark" }>("root");
   const { user, isAdmin, clients, activeClient } = loaderData;
-  const { pathname } = useLocation();
+  const location = useLocation();
+  const navigation = useNavigation();
+  // While a link's page loads, the menu already shows where you're going
+  const going = navigation.state === "loading" && !navigation.formMethod ? navigation.location : null;
+  const pathname = going?.pathname ?? location.pathname;
+  // A click through to another page shows that page's outline straight away. The page you're
+  // leaving stays mounted underneath, hidden, so nothing on it is lost if the click goes nowhere.
+  const changingPage = !!going && pageKey(going.pathname) !== pageKey(location.pathname);
+  const showSkeleton = useAfter(changingPage, 120);
+  const showProgress = useAfter(navigation.state !== "idle", 150);
   const [menuOpen, setMenuOpen] = useState(false);
   useEffect(() => setMenuOpen(false), [pathname]);
+  // Where "/" would redirect to, linked directly to save a round trip
+  const home = isAdmin && !activeClient ? "/admin" : "/check";
 
   return (
     <div className="min-h-dvh">
+      {showProgress ? <div className="nav-progress" role="progressbar" aria-label="Loading" /> : null}
       {/* Sidebar: fixed on large screens, slides in from the left on smaller ones */}
       <aside
         id="sidebar"
@@ -144,7 +157,7 @@ export default function AppLayout({ loaderData }: Route.ComponentProps) {
         )}
       >
         <div className="flex h-[70px] shrink-0 items-center gap-2.5 px-6">
-          <Link to="/" className="flex items-center gap-2.5 text-[16px] font-semibold whitespace-nowrap text-head">
+          <Link to={home} className="flex items-center gap-2.5 text-[16px] font-semibold whitespace-nowrap text-head">
             <LogoMark size={26} />
             VAT Rules Checker
           </Link>
@@ -181,7 +194,7 @@ export default function AppLayout({ loaderData }: Route.ComponentProps) {
             >
               <IconMenu />
             </button>
-            <Link to="/" className="shrink-0 lg:hidden" aria-label="VAT Rules Checker"><LogoMark size={26} /></Link>
+            <Link to={home} className="shrink-0 lg:hidden" aria-label="VAT Rules Checker"><LogoMark size={26} /></Link>
             <ClientSwitcher clients={clients} activeId={activeClient?.id ?? null} isAdmin={isAdmin} />
           </div>
           <div className="flex h-full shrink-0 items-center gap-1">
@@ -190,8 +203,11 @@ export default function AppLayout({ loaderData }: Route.ComponentProps) {
           </div>
         </header>
 
-        <main className="flex-1 px-4 pt-5 pb-10 sm:px-6 sm:pt-6">
-          <Outlet />
+        <main className="flex-1 px-4 pt-5 pb-10 sm:px-6 sm:pt-6" aria-busy={showSkeleton || undefined}>
+          {showSkeleton && going ? <PageSkeleton pathname={going.pathname} clients={clients} /> : null}
+          <div hidden={showSkeleton}>
+            <Outlet />
+          </div>
         </main>
 
         <footer className="flex flex-wrap justify-between gap-x-6 gap-y-1 border-t border-line px-4 py-4 text-[13px] text-muted sm:px-6">

@@ -34,7 +34,7 @@ Open http://localhost:5173 and sign in with one of the demo accounts. On your co
 
 Other commands:
 
-- `npm test` runs the 28 rule scenarios, the coverage check across all 118,581 possible inputs, and a test that applies every migration to a throwaway database.
+- `npm test` runs the 28 rule scenarios, the coverage check across all 118,581 possible inputs, a test that applies every migration to a throwaway database, and the sign-in and Clients page queries against it.
 - `npm run typecheck`
 - `npm run build`
 
@@ -45,9 +45,10 @@ Other commands:
 | `app/engine/` | The rules engine: pure TypeScript with no database or DOM. It runs in the browser for instant results and on the server before anything is saved. `starter.ts` holds Miranda's rules and the test scenarios. |
 | `app/routes/` | Pages. `check.tsx` is the checker, `history*.tsx` the saved checks, `help.tsx` the How to page (admin sections only show for PVM admins), and `admin/` holds clients, the draft rules editor, trying the draft, published versions, staff accounts and VAT rates. |
 | `app/routes/api.vies.ts` | `POST /api/vies` checks a VAT number with the EU's VIES service and stores the answer as evidence. Signed-in users only. |
-| `app/components/` | `Checker.tsx` (shared by the checker and "Try the draft"), `RulesEditor.tsx` and UI pieces |
+| `app/components/` | `Checker.tsx` (shared by the checker and "Try the draft"), `RulesEditor.tsx`, `Skeletons.tsx` (page outlines shown while a page loads) and UI pieces |
 | `app/models/` | Database queries, one file per area |
 | `app/lib/auth.server.ts` | Sign-in. Everything goes through this file (see Sign-in) |
+| `app/lib/prefetch.client.ts` | Loads a page's data when the pointer rests on a link to it (see Speed) |
 | `db/schema.ts` | Database tables |
 | `db/migrations/` | SQL migrations. `npm run db:migrate` applies new ones to Supabase, and Netlify runs it before every build |
 | `db/migrate.ts`, `db/connection.ts` | The migration runner and the connection settings (SSL for Supabase, none locally) |
@@ -62,6 +63,16 @@ Other commands:
 - To roll back, copy an older version into the draft on "Published versions" and publish it again.
 
 VAT rates are shared by all clients and have an "applies from" date, so a rate change can be added ahead of time and takes over on the day.
+
+## Speed
+
+Each page change is one request to the Netlify Function, which checks who's signed in and runs the page's loaders. What keeps it quick:
+
+- **Few database round trips.** The sign-in check is one query (the person and their clients together) and runs on every click, so keep it to one. Admin pages find the client in the list it already loaded (`clientFromSlug`) rather than looking it up again. Run a page's own queries side by side with `Promise.all`, or fold them into one.
+- **Connections stay open** for two minutes between requests (`app/lib/db.server.ts`), because opening one to Supabase takes several round trips.
+- **Prefetching on hover.** `app/lib/prefetch.client.ts` starts loading a page when the pointer rests on a link (or a finger touches it, or the mouse button goes down) and hands the response over when the click arrives. Any save throws prefetched pages away, so nothing opens with data from before a change. Don't add React Router's `<Link prefetch>`: the browser doesn't reuse what it fetches, so every page would load twice.
+- **Skeletons.** If a page isn't ready within about a tenth of a second, its outline shows straight away (`app/components/Skeletons.tsx`) and the menu highlights where you're going. Add an outline there for any new page.
+- **Keep the function and the database in the same region.** Netlify Functions run in US East (Ohio) unless the project's functions region is changed, which needs a paid Netlify plan. Every query crosses between the two regions, so if Supabase is in Europe each one costs about a tenth of a second.
 
 ## Database changes
 

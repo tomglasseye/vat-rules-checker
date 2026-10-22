@@ -3,25 +3,18 @@ import { data, useBeforeUnload, useBlocker, useFetcher, useSearchParams } from "
 import { RulesEditor, useHealth, type DraftState } from "~/components/RulesEditor";
 import { Banner, Button, Card } from "~/components/ui";
 import { parseRuleSet } from "~/engine/validate";
-import { authContext } from "~/lib/auth.server";
-import { getClientBySlug } from "~/models/clients.server";
+import { authContext, clientFromSlug } from "~/lib/auth.server";
 import { ratesOn } from "~/models/rates.server";
 import { getDraft, getPublished, publishDraft, resetDraftTo, saveDraft } from "~/models/rules.server";
 import type { Route } from "./+types/client-rules";
 
 export const meta: Route.MetaFunction = () => [{ title: "Draft rules · Admin · VAT Rules Checker" }];
 
-async function clientOr404(slug: string) {
-  const org = await getClientBySlug(slug);
-  if (!org) throw new Response("Client not found", { status: 404 });
-  return org;
-}
-
 const same = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b);
 
 export async function loader({ params, context }: Route.LoaderArgs) {
   const auth = context.get(authContext);
-  const org = await clientOr404(params.slug);
+  const org = clientFromSlug(auth, params.slug);
   const [draft, live, rates] = await Promise.all([getDraft(org.id, auth.user.id), getPublished(org.id), ratesOn()]);
   return {
     client: { id: org.id, slug: org.slug, name: org.name },
@@ -33,7 +26,7 @@ export async function loader({ params, context }: Route.LoaderArgs) {
 
 export async function action({ request, params, context }: Route.ActionArgs) {
   const auth = context.get(authContext);
-  const org = await clientOr404(params.slug);
+  const org = clientFromSlug(auth, params.slug);
   const form = await request.formData();
   const intent = String(form.get("intent"));
 

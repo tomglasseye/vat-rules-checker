@@ -1,4 +1,4 @@
-import { and, asc, count, eq, gte, sql } from "drizzle-orm";
+import { and, asc, eq, sql } from "drizzle-orm";
 import { starterRules, starterTests } from "~/engine";
 import { db, newId, schema } from "~/lib/db.server";
 
@@ -7,37 +7,29 @@ export async function getClientBySlug(slug: string) {
   return org ?? null;
 }
 
+/** Every client with its counts for the Clients page, in one query rather than one per figure */
 export async function listClientsWithStats() {
   const since = new Date(Date.now() - 30 * 24 * 3600 * 1000);
-  const orgs = await db().select().from(schema.organization).orderBy(asc(schema.organization.name));
-  const members = await db()
-    .select({ org: schema.member.organizationId, n: count() })
-    .from(schema.member)
-    .groupBy(schema.member.organizationId);
-  const checks = await db()
-    .select({ org: schema.saleCheck.organizationId, n: count() })
-    .from(schema.saleCheck)
-    .where(gte(schema.saleCheck.createdAt, since))
-    .groupBy(schema.saleCheck.organizationId);
-  const versions = await db()
-    .select({ org: schema.ruleSet.organizationId, v: sql<number | null>`max(${schema.ruleSet.version})` })
-    .from(schema.ruleSet)
-    .groupBy(schema.ruleSet.organizationId);
-  const drafts = await db()
-    .select({ org: schema.ruleSet.organizationId, updatedAt: schema.ruleSet.updatedAt })
-    .from(schema.ruleSet)
-    .where(eq(schema.ruleSet.status, "draft"));
-  const by = <T extends { org: string }>(rows: T[]) => new Map(rows.map((r) => [r.org, r]));
-  const m = by(members), c = by(checks), v = by(versions), d = by(drafts);
-  return orgs.map((o) => ({
-    id: o.id,
-    name: o.name,
-    slug: o.slug,
-    users: m.get(o.id)?.n ?? 0,
-    checks30d: c.get(o.id)?.n ?? 0,
-    publishedVersion: v.get(o.id)?.v ?? null,
-    draftUpdatedAt: d.get(o.id)?.updatedAt ?? null,
-  }));
+  const o = schema.organization;
+  return db()
+    .select({
+      id: o.id,
+      name: o.name,
+      slug: o.slug,
+      users: sql<number>`(select count(*) from ${schema.member} m where m.organization_id = ${o}.id)`.mapWith(Number),
+      checks30d: sql<number>`(
+        select count(*) from ${schema.saleCheck} sc
+        where sc.organization_id = ${o}.id and sc.created_at >= ${since.toISOString()}
+      )`.mapWith(Number),
+      publishedVersion: sql<number | null>`(
+        select max(rs.version) from ${schema.ruleSet} rs where rs.organization_id = ${o}.id
+      )`.mapWith((v) => (v === null ? null : Number(v))),
+      draftUpdatedAt: sql<Date | null>`(
+        select rs.updated_at from ${schema.ruleSet} rs where rs.organization_id = ${o}.id and rs.status = 'draft'
+      )`.mapWith(schema.ruleSet.updatedAt),
+    })
+    .from(o)
+    .orderBy(asc(o.name));
 }
 
 export function slugify(name: string) {

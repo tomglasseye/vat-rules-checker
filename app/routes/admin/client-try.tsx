@@ -3,8 +3,7 @@ import { data, useFetcher } from "react-router";
 import { Checker } from "~/components/Checker";
 import { Banner, Button } from "~/components/ui";
 import { DEFAULT_INPUT, describeInputs, evaluate, inputFromParams, saleFromJson, scenarioFromResult, type CheckInput } from "~/engine";
-import { authContext } from "~/lib/auth.server";
-import { getClientBySlug } from "~/models/clients.server";
+import { authContext, clientFromSlug } from "~/lib/auth.server";
 import { ratesOn } from "~/models/rates.server";
 import { getDraft, saveDraft } from "~/models/rules.server";
 import type { Route } from "./+types/client-try";
@@ -13,8 +12,7 @@ export const meta: Route.MetaFunction = () => [{ title: "Try the draft · Admin 
 
 export async function loader({ request, params, context }: Route.LoaderArgs) {
   const auth = context.get(authContext);
-  const org = await getClientBySlug(params.slug);
-  if (!org) throw new Response("Client not found", { status: 404 });
+  const org = clientFromSlug(auth, params.slug);
   const [draft, rates] = await Promise.all([getDraft(org.id, auth.user.id), ratesOn()]);
   return {
     client: { id: org.id, slug: org.slug, name: org.name },
@@ -26,8 +24,7 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
 
 export async function action({ request, params, context }: Route.ActionArgs) {
   const auth = context.get(authContext);
-  const org = await getClientBySlug(params.slug);
-  if (!org) throw new Response("Client not found", { status: 404 });
+  const org = clientFromSlug(auth, params.slug);
   const form = await request.formData();
   const sale = saleFromJson(String(form.get("sale") ?? ""));
   const label = String(form.get("label") ?? "").trim().slice(0, 200);

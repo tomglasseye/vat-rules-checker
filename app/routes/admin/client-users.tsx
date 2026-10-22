@@ -1,6 +1,7 @@
 import { data, Form, useNavigation } from "react-router";
 import { Banner, Button, Card, CardHeader, PageHeader } from "~/components/ui";
-import { addMember, getClientBySlug, listMembers, removeMember, type MemberRole } from "~/models/clients.server";
+import { authContext, clientFromSlug } from "~/lib/auth.server";
+import { addMember, listMembers, removeMember, type MemberRole } from "~/models/clients.server";
 import type { Route } from "./+types/client-users";
 
 export const meta: Route.MetaFunction = () => [{ title: "Staff accounts · Admin · VAT Rules Checker" }];
@@ -11,16 +12,14 @@ const ROLES: { value: MemberRole; label: string; hint: string }[] = [
   { value: "owner", label: "Owner", hint: "The account holder at the client" },
 ];
 
-export async function loader({ params }: Route.LoaderArgs) {
-  const org = await getClientBySlug(params.slug);
-  if (!org) throw new Response("Client not found", { status: 404 });
+export async function loader({ params, context }: Route.LoaderArgs) {
+  const org = clientFromSlug(context.get(authContext), params.slug);
   const members = await listMembers(org.id);
   return { client: { name: org.name }, members: members.map((m) => ({ ...m, since: m.since.toISOString() })) };
 }
 
-export async function action({ request, params }: Route.ActionArgs) {
-  const org = await getClientBySlug(params.slug);
-  if (!org) throw new Response("Client not found", { status: 404 });
+export async function action({ request, params, context }: Route.ActionArgs) {
+  const org = clientFromSlug(context.get(authContext), params.slug);
   const form = await request.formData();
   if (form.get("intent") === "remove") {
     await removeMember(org.id, String(form.get("memberId")));

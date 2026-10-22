@@ -1,8 +1,7 @@
 import { data, Form, useNavigation } from "react-router";
 import { Button, Card, Chip, PageHeader } from "~/components/ui";
 import type { Rule } from "~/engine";
-import { authContext } from "~/lib/auth.server";
-import { getClientBySlug } from "~/models/clients.server";
+import { authContext, clientFromSlug } from "~/lib/auth.server";
 import { listVersions, resetDraftTo } from "~/models/rules.server";
 import type { Route } from "./+types/client-versions";
 
@@ -22,9 +21,8 @@ function diff(prev: Rule[] | null, cur: Rule[]) {
   return { added, removed, changed, moved: order(prev) !== order(cur) };
 }
 
-export async function loader({ params }: Route.LoaderArgs) {
-  const org = await getClientBySlug(params.slug);
-  if (!org) throw new Response("Client not found", { status: 404 });
+export async function loader({ params, context }: Route.LoaderArgs) {
+  const org = clientFromSlug(context.get(authContext), params.slug);
   const versions = await listVersions(org.id);
   return {
     versions: versions.map((v, i) => ({
@@ -43,8 +41,7 @@ export async function loader({ params }: Route.LoaderArgs) {
 
 export async function action({ request, params, context }: Route.ActionArgs) {
   const auth = context.get(authContext);
-  const org = await getClientBySlug(params.slug);
-  if (!org) throw new Response("Client not found", { status: 404 });
+  const org = clientFromSlug(auth, params.slug);
   const version = Number((await request.formData()).get("version"));
   if (!(await resetDraftTo(org.id, version, auth.user.id))) return data({ error: "That version doesn't exist." }, { status: 404 });
   return { message: `Version ${version} copied into the draft. Review it on the Draft rules tab, then publish.` };

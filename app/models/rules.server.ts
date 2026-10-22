@@ -16,6 +16,15 @@ export async function getPublished(organizationId: string): Promise<RuleSetRow |
   return row ?? null;
 }
 
+/** Just the number of the live version, without loading its rules */
+export async function getLiveVersion(organizationId: string): Promise<number | null> {
+  const [row] = await db()
+    .select({ v: max(schema.ruleSet.version) })
+    .from(schema.ruleSet)
+    .where(and(eq(schema.ruleSet.organizationId, organizationId), eq(schema.ruleSet.status, "published")));
+  return row?.v ?? null;
+}
+
 export async function getRuleSet(organizationId: string, id: string): Promise<RuleSetRow | null> {
   const [row] = await db()
     .select()

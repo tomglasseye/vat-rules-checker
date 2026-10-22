@@ -5,9 +5,9 @@
 // change: signIn/signOut call Better Auth, and loadAuth reads its session. The `user`,
 // `organization` and `member` tables already use Better Auth's shape, and "active client" maps to
 // its session.activeOrganizationId.
-import { and, asc, eq } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import { createContext, createCookieSessionStorage, redirect, type MiddlewareFunction } from "react-router";
-import { db, schema } from "./db.server";
+import { db, schema, warmConnections } from "./db.server";
 import { env } from "./env.server";
 
 export type PlatformRole = "admin" | "user";
@@ -58,20 +58,33 @@ async function loadAuth(request: Request): Promise<Auth | null> {
   const session = await sessions().getSession(request.headers.get("Cookie"));
   const userId = session.get("userId");
   if (!userId) return null;
+  warmConnections();
 
-  const [u] = await db().select().from(schema.user).where(eq(schema.user.id, userId)).limit(1);
+  // The person and the clients they can open, in one round trip, because this runs on every
+  // page change: every client for PVM admins, the ones they're a member of for client staff.
+  const [u] = await db()
+    .select({
+      id: schema.user.id,
+      name: schema.user.name,
+      email: schema.user.email,
+      role: schema.user.role,
+      clients: sql<ClientAccess[] | string>`coalesce((
+        select json_agg(json_build_object(
+          'id', o.id, 'name', o.name, 'slug', o.slug,
+          'role', case when ${schema.user}.role = 'admin' then 'pvm' else m.role end
+        ) order by o.name)
+        from ${schema.organization} o
+        left join ${schema.member} m on m.organization_id = o.id and m.user_id = ${schema.user}.id
+        where ${schema.user}.role = 'admin' or m.id is not null
+      ), '[]'::json)`,
+    })
+    .from(schema.user)
+    .where(eq(schema.user.id, userId))
+    .limit(1);
   if (!u) return null;
   const user: AuthUser = { id: u.id, name: u.name, email: u.email, role: u.role === "admin" ? "admin" : "user" };
   const isAdmin = user.role === "admin";
-
-  const clients: ClientAccess[] = isAdmin
-    ? (await db().select().from(schema.organization).orderBy(asc(schema.organization.name))).map((o) => ({ id: o.id, name: o.name, slug: o.slug, role: "pvm" }))
-    : await db()
-        .select({ id: schema.organization.id, name: schema.organization.name, slug: schema.organization.slug, role: schema.member.role })
-        .from(schema.member)
-        .innerJoin(schema.organization, eq(schema.member.organizationId, schema.organization.id))
-        .where(eq(schema.member.userId, user.id))
-        .orderBy(asc(schema.organization.name));
+  const clients: ClientAccess[] = typeof u.clients === "string" ? JSON.parse(u.clients) : u.clients;
 
   const activeId = session.get("activeOrganizationId");
   const activeClient = clients.find((c) => c.id === activeId) ?? clients[0] ?? null;
@@ -137,6 +150,16 @@ export async function setActiveClient(request: Request, auth: Auth, organization
   const session = await sessions().getSession(request.headers.get("Cookie"));
   session.set("activeOrganizationId", organizationId);
   return new Headers({ "Set-Cookie": await sessions().commitSession(session) });
+}
+
+/**
+ * A client by its slug, from the list the sign-in check already loaded (PVM admins have every
+ * client in it), so admin pages don't need a query of their own to find it. 404 if it isn't there.
+ */
+export function clientFromSlug(auth: Auth, slug: string): ClientAccess {
+  const client = auth.clients.find((c) => c.slug === slug);
+  if (!client) throw new Response("Client not found", { status: 404 });
+  return client;
 }
 
 /** Membership check for actions that take an organisation id from the form */
