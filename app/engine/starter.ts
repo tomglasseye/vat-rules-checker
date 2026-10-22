@@ -1,5 +1,5 @@
 // Starter rule set: Miranda Hope's EU VAT Calculator (PVM Consultants, spreadsheet v3) with her
-// answers up to 19 Oct 2026 and the formula issues fixed. Client set-up it assumes: established in
+// answers up to 22 Oct 2026 and the formula issues fixed. Client set-up it assumes: established in
 // the UK, paper (non-established) VAT registration in the Netherlands, not yet registered for IOSS.
 // New clients start from a copy of this, which PVM then adapts.
 import type { Rule, TestScenario, Then, When } from "./types";
@@ -51,13 +51,13 @@ export function starterRules(): Rule[] {
       V3 + " Miranda (14 Oct): the client owns the goods on import into the UK, so this is a UK sale. Open point: assumes the client always imports the goods itself.",
       { origin: ["NL", "OTHER"], destZone: ["UK"] },
       { code: "20% UK VAT", rate: DEST, invoice: W.ukImpInv, warning: W.ukImpWarn, entity: "UK" }),
-    R("r-uk-eu-reroute-b2b", "UK stock to an EU business: reroute via NL", true,
-      NOTV3 + "its formula gives intra-community supply or triangulation here. Miranda (19 Oct): moving UK stock into the EU is a 0% UK export, but it has to be rerouted through the Netherlands first. Open points: should this block the sale or only warn, and does it apply when the goods are delivered in the Netherlands?",
+    R("r-uk-eu-reroute-b2b", "UK stock to an EU business: reroute via NL", false,
+      NOTV3 + "its formula gives intra-community supply or triangulation here. Miranda (19 Oct): moving UK stock into the EU is a 0% UK export, but it has to be rerouted through the Netherlands first. Confirmed by Miranda (22 Oct): block the sale with \"Do not invoice\", including deliveries in the Netherlands, so the user has to pick the Netherlands as the ship-from country.",
       { origin: ["UK"], destZone: ["EU", "NL"], type: ["B2B"] },
       { code: "REROUTE VIA NL REQUIRED", rate: NONE, level: "block", invoice: W.ukRerouteInv,
         warning: "UK stock can't be sent straight to a business customer in {dest}. Move the goods to the Netherlands warehouse first (a 0% UK export, imported into the Netherlands), then check the sale again with the Netherlands as the ship-from country." }),
-    R("r-uk-eu-reroute-b2c", "UK stock to an EU consumer: reroute via NL", true,
-      NOTV3 + "its formula uses OSS wording. Miranda (19 Oct): the client isn't registered for IOSS yet, so UK stock has to be rerouted through the Netherlands, and the OSS rules then apply. She's getting them registered, so the IOSS rules (parcels up to €150, and import VAT above €150) are kept aside to put back then. Open points: should this block the sale or only warn, and does it apply when the goods are delivered in the Netherlands?",
+    R("r-uk-eu-reroute-b2c", "UK stock to an EU consumer: reroute via NL", false,
+      NOTV3 + "its formula uses OSS wording. Miranda (19 Oct): the client isn't registered for IOSS yet, so UK stock has to be rerouted through the Netherlands, and the OSS rules then apply. She's getting them registered, so the IOSS rules (parcels up to €150, and import VAT above €150) are kept aside to put back then. Confirmed by Miranda (22 Oct): block the sale with \"Do not invoice\", including deliveries in the Netherlands.",
       { origin: ["UK"], destZone: ["EU", "NL"], type: ["B2C"] },
       { code: "REROUTE VIA NL REQUIRED", rate: NONE, level: "block", invoice: W.ukRerouteInv,
         warning: "The client isn't registered for IOSS, so UK stock can't be sent straight to a consumer in {dest}. Move the goods to the Netherlands warehouse first, then check the sale again with the Netherlands as the ship-from country." }),
@@ -78,12 +78,12 @@ export function starterRules(): Rule[] {
       { origin: ["NL", "OTHER"], destZone: ["EU"], type: ["B2B"], custZone: ["UK", "ROW"], vies: ["unchecked", "unavailable"] },
       { code: "OSS Destination Rate", rate: DEST, invoice: W.ossInv, entity: "NL",
         warning: "The customer is based in {cust} and has no verified EU VAT number, so this is treated as a consumer sale. If they give you a valid {dest} VAT number for the receiving party, check it with VIES: the sale can then be zero-rated." }),
-    R("r-triangulation", "Triangulation", true,
-      NOTV3 + "its formula triggers triangulation when the customer's country differs from the delivery country. This follows Miranda's 14 Oct answer: the despatch country, NL and the delivery country are all different. On 19 Oct she said it's when the customer's country differs from the delivery country, as v3 does. Kept on the 14 Oct version until she confirms with worked examples.",
+    R("r-triangulation", "Triangulation", false,
+      NOTV3 + "its formula triggers triangulation when the customer's country differs from the delivery country. Triangulation is when the despatch country, NL and the delivery country are all different (Miranda, 14 Oct). Confirmed by Miranda (22 Oct) with worked examples: French stock to a German customer in Germany, and French stock to Italy for a Spanish customer, are both triangulation.",
       { origin: ["OTHER"], destZone: ["EU"], type: ["B2B"] },
       { code: "0% EU Triangulation", rate: ZERO, invoice: W.triInv, warning: W.triWarn, needsVat: true, entity: "NL" }),
-    R("r-ics", "Intra-community supply from NL stock", true,
-      NOTV3 + "its formula calls this triangulation when the customer's country differs from the delivery country. Goods leaving the Netherlands can't be triangulation under Miranda's 14 Oct answer, so this is a plain 0% intra-community supply. Her 19 Oct answer would make NL stock to Germany for a French customer triangulation; kept as it is until she confirms with worked examples.",
+    R("r-ics", "Intra-community supply from NL stock", false,
+      NOTV3 + "its formula calls this triangulation when the customer's country differs from the delivery country. Goods leaving the Netherlands can't be triangulation under Miranda's 14 Oct answer, so this is a plain 0% intra-community supply. Confirmed by Miranda (22 Oct): NL stock delivered to Germany for a customer based in France is an intra-community supply.",
       { origin: ["NL"], destZone: ["EU"], type: ["B2B"] },
       { code: "0% Intra-Community Supply", rate: ZERO, invoice: W.icsInv, needsVat: true, entity: "NL" }),
     R("r-oss", "EU stock to an EU consumer (OSS)", false, V3,

@@ -26,7 +26,7 @@ describe("starter rules", () => {
   test("health says the starter set is publishable", () => {
     const h = health(model.rules, starterTests(), model.rates);
     expect(h.ok).toBe(true);
-    expect(h.signoff).toBe(7);
+    expect(h.signoff).toBe(3);
   });
 
   test("UK stock into the EU is rerouted via NL, B2B and B2C", () => {
