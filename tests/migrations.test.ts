@@ -53,8 +53,14 @@ test("only one draft per client", async () => {
 });
 
 test("the migration runner applies each migration once", async () => {
-  expect(firstRun).toEqual(["20261016073952_init", "20261016074013_seed_demo", "20261019154653_uk_stock_reroute"]);
+  expect(firstRun).toEqual(["20261016073952_init", "20261016074013_seed_demo", "20261019154653_uk_stock_reroute", "20261028154545_enable_rls"]);
   expect(await migrate(url, "./db/migrations", () => {})).toEqual([]);
   const { rows } = await db.query<{ n: number }>(`SELECT count(*)::int AS n FROM app_migrations`);
-  expect(rows[0].n).toBe(3);
+  expect(rows[0].n).toBe(4);
+});
+
+test("every table has Row-Level Security turned on, so Supabase's Data API can't reach it", async () => {
+  // A new table needs `.enableRLS()` in db/schema.ts (or its own migration), or this fails.
+  const { rows } = await db.query<{ tablename: string }>(`SELECT tablename FROM pg_tables WHERE schemaname = 'public' AND NOT rowsecurity`);
+  expect(rows).toEqual([]);
 });
