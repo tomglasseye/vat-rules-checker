@@ -22,7 +22,7 @@ export const user = pgTable("user", {
   role: text("role").notNull().default("user"),
   createdAt: createdAt(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
-});
+}).enableRLS();
 
 /** A PVM client. Everything the client's staff see is scoped to one of these. */
 export const organization = pgTable("organization", {
@@ -32,7 +32,7 @@ export const organization = pgTable("organization", {
   logo: text("logo"),
   metadata: text("metadata"),
   createdAt: createdAt(),
-});
+}).enableRLS();
 
 export const member = pgTable(
   "member",
@@ -45,7 +45,7 @@ export const member = pgTable(
     createdAt: createdAt(),
   },
   (t) => [uniqueIndex("member_org_user_uq").on(t.organizationId, t.userId), index("member_user_idx").on(t.userId)],
-);
+).enableRLS();
 
 // ---- Rules ----
 
@@ -75,7 +75,7 @@ export const ruleSet = pgTable(
     uniqueIndex("rule_set_org_version_uq").on(t.organizationId, t.version),
     uniqueIndex("rule_set_one_draft_uq").on(t.organizationId).where(sql`status = 'draft'`),
   ],
-);
+).enableRLS();
 
 /** Standard VAT rates with the date each one applies from. The rate for a day is the latest row on or before it. */
 export const vatRate = pgTable(
@@ -91,7 +91,7 @@ export const vatRate = pgTable(
     createdBy: text("created_by").references(() => user.id, { onDelete: "set null" }),
   },
   (t) => [uniqueIndex("vat_rate_country_from_uq").on(t.country, t.effectiveFrom)],
-);
+).enableRLS();
 
 // ---- Checks ----
 
@@ -114,7 +114,7 @@ export const viesLookup = pgTable(
     createdAt: createdAt(),
   },
   (t) => [index("vies_lookup_org_idx").on(t.organizationId, t.createdAt)],
-);
+).enableRLS();
 
 export interface StoredResult {
   code: string;
@@ -144,4 +144,4 @@ export const saleCheck = pgTable(
     createdAt: createdAt(),
   },
   (t) => [index("sale_check_org_created_idx").on(t.organizationId, t.createdAt), index("sale_check_org_ref_idx").on(t.organizationId, t.orderRef)],
-);
+).enableRLS();

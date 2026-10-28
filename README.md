@@ -80,6 +80,8 @@ Each page change is one request to the Netlify Function, which checks who's sign
 2. Run `npm run db:generate`. This writes a new folder in `db/migrations/`.
 3. `npm run dev` applies it locally. The next Netlify build applies it to Supabase (`npm run db:migrate`, which records what it has applied in the `app_migrations` table).
 
+Every table has Row-Level Security turned on with no policies, which shuts out Supabase's Data API (the app doesn't use it, and connects as the tables' owner, which bypasses RLS). Give a new table `.enableRLS()` in `db/schema.ts` so its migration turns it on, or Supabase's security scan will flag it again. `npm test` checks this.
+
 Never edit or delete a migration that has been applied to Supabase: the runner won't run it again, so the change would be lost. Write a new one instead. Don't use `drizzle-kit push` or `drizzle-kit migrate`.
 
 To apply migrations to Supabase by hand, run `DATABASE_URL="…" npm run db:migrate`.
